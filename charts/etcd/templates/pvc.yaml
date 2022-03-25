@@ -1,0 +1,59 @@
+{{- $baseName         := include "etcd.name" . -}}
+{{- $selectorLabels   := include "etcd.selectorLabels" . -}}
+{{- $commonLabels     := include "etcd.labels" . -}}
+{{- $listETCD         := list "main" -}}
+{{- $listReplicaCount := until ( int ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount)) }}
+
+{{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
+  {{- $listETCD = append $listETCD "events" -}}
+{{- end }}
+
+{{- range $instanceContext := $listETCD }}
+
+  {{- with $.Values.applications.etcd.extraParams.clusterSize }}
+    {{- if has .replicaCount .currentReplicaCount }}
+
+      {{ range $instanceNumber := $listReplicaCount }}
+
+        {{- with $.Values.applications.etcd }}
+
+          {{- with .PersistentVolume.PersistentVolumeClaim }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: "{{ $baseName}}-{{- $instanceContext }}-pvc-{{- $instanceNumber }}"
+
+  labels:
+    app.kubernetes.io/instance: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  annotations:
+  {{- with .metadata.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  {{- with .spec }}
+  accessModes:
+    - {{ .mode }}
+  resources:
+    requests:
+      storage: {{ .storage }}
+  storageClassName: {{ .storageClassName }}
+  {{- end }}
+
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- else }}
+      {{- fail "value for .Values.applications.etcd.clusterSize.replicaCount is not as expected" }}
+    {{- end }}
+  {{- end }}
+{{- end }}

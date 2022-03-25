@@ -1,0 +1,165 @@
+
+
+applications:
+  etcd:
+    extraParams:
+      dedicatedEtcd:
+        events: true
+
+      clusterSize:
+        currentReplicaCount: [1,3,5]
+        replicaCount: 5
+
+    Deployment:
+      metadata:
+        labels: {}
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+      nodeSelector: 
+        node-role.dobry-kot.io/etcd: "true"
+        
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 5
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 6
+
+      affinity:
+        topologyKey: kubernetes.io/hostname
+
+      containers:
+        etcd:
+          name: etcd
+          image: "k8s.gcr.io/etcd:3.4.13-0"
+          imagePullPolicy: IfNotPresent
+          command:
+            path: 
+              - etcd
+            args: 
+              - --data-dir=/var/lib/etcd
+              - --listen-client-urls=https://0.0.0.0:2379
+              - --listen-peer-urls=https://0.0.0.0:2380
+              - --listen-metrics-urls=http://0.0.0.0:2381
+              - --initial-cluster-token=etcd
+              - --cert-file=/pki/etcd/server/tls.crt
+              - --key-file=/pki/etcd/server/tls.key
+              - --trusted-ca-file=/pki/etcd/ca/tls.crt
+              - --peer-cert-file=/pki/etcd/peer/tls.crt
+              - --peer-client-cert-auth=true
+              - --peer-key-file=/pki/etcd/peer/tls.key
+              - --peer-trusted-ca-file=/pki/etcd/ca/tls.crt
+              - --client-cert-auth=true
+              - --snapshot-count=10000
+              - --logger=zap
+          envs:
+            - name: ETCDCTL_API
+              value: "3"
+            - name: ETCDCTL_CACERT
+              value: /pki/etcd/peer/ca.crt
+            - name: ETCDCTL_CERT
+              value: /pki/etcd/peer/tls.crt
+            - name: ETCDCTL_KEY
+              value: /pki/etcd/peer/tls.key 
+          ports: 
+            - containerPort: 2379
+              name: client
+            - containerPort: 2380
+              name: peer
+            - containerPort: 2381
+              name: metrics
+          volumeMounts: []
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            failureThreshold: 8
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+            httpGet:
+              path: /health
+              port: metrics
+              scheme: HTTP
+
+      volumes: []
+
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 1
+
+    PersistentVolume:
+      PersistentVolumeClaim:
+        metadata:
+          labels: {}
+          annotations: {}
+        spec:
+          mode: ReadWriteOnce
+          storage: 2Gi
+          storageClassName: yc-network-nvme
+
+    Certificates:
+      server:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        deltaRenewBeforeByInstance: 60
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "server auth"
+          - "client auth"
+        dnsNames:
+          - "localhost"
+        ipAddresses:
+          - "127.0.0.1"
+      peer:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        deltaRenewBeforeByInstance: 60
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "server auth"
+          - "client auth"
+        dnsNames:
+          - "localhost"
+        ipAddresses:
+          - "127.0.0.1"
+      ca:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "server auth"
+          - "client auth"
+        dnsNames:
+          - "localhost"
+        ipAddresses:
+          - "127.0.0.1"
+        isCA: true
+        issuerRefName: selfsigning-issuer

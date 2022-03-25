@@ -1,0 +1,195 @@
+{{- $baseName             := include "etcd.name" . -}}
+{{- $selectorLabels       := include "etcd.selectorLabels" . -}}
+{{- $commonLabels         := include "etcd.labels" . -}}
+{{- $currentNamespace     := .Release.Namespace -}}
+{{- $listETCD             := list "main" -}}
+{{- $listReplicaCount     := until ( int ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount)) }}
+
+
+{{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
+  {{- $listETCD = append $listETCD "events" -}}
+{{- end }}
+
+{{- range $instanceContext := $listETCD }}
+
+  {{- $listEtcdInstances    := list "" }}
+  {{- $listEtcdSvcInstances := list "" }}
+
+  {{- range $instanceNumber   := $listReplicaCount }}
+    {{- $listEtcdInstances    = append $listEtcdInstances (printf "$(SVC_NAME)-%d=https://$(SVC_NAME)-%d:2380" $instanceNumber $instanceNumber) -}}
+    {{- $listEtcdSvcInstances = append $listEtcdSvcInstances (printf "%s-%s-svc-%d:2379" $baseName $instanceContext $instanceNumber) -}}
+  {{- end }}
+
+  {{- $initialClusterList     := trimPrefix "," (join "," $listEtcdInstances) }}
+  {{- $initialClusterSVCList  := trimPrefix "," (join "," $listEtcdSvcInstances) }}
+
+  {{- with $.Values.applications.etcd.extraParams.clusterSize }}
+
+    {{- if has .replicaCount .currentReplicaCount }}
+
+      {{ range $instanceNumber := $listReplicaCount }}
+
+        {{- with $.Values.applications.etcd.Deployment }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+  
+  labels:
+    app.kubernetes.io/instance: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  annotations:
+  {{- with .metadata.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  replicas: 1
+
+  {{- with .strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  selector:
+    matchLabels: 
+      app.kubernetes.io/instance: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+      app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+      {{- $selectorLabels | nindent 6 }}
+
+  template:
+    metadata:
+      name: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+
+      labels:
+        app.kubernetes.io/instance: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+        app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+        {{- $commonLabels | nindent 8 }}
+      {{- with .metadata.labels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      annotations:
+      {{- with .metadata.annotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+    spec:
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: {{ .affinity.topologyKey }}
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+                    {{- $selectorLabels | nindent 20 }}
+
+      automountServiceAccountToken: false
+
+      {{- with .containers }}
+      containers:
+        {{- with .etcd }}
+        - name: {{ .name }}
+
+          command:
+          {{- with .command.path }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          args:
+            - --name=$(SVC_NAME)-{{- $instanceNumber }}
+            - --advertise-client-urls=https://$(SVC_NAME)-{{- $instanceNumber }}:2379
+            - --initial-advertise-peer-urls=https://$(SVC_NAME)-{{- $instanceNumber }}:2380
+            - --initial-cluster={{- $initialClusterList }}
+          {{- with .command.args }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          env:
+            - name: SVC_NAME
+              value: {{ $baseName }}-{{- $instanceContext }}-svc
+            - name: ETCDCTL_ENDPOINTS 
+              value: {{ $initialClusterSVCList }}
+          {{- with .envs }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          image: {{ .image }}
+          imagePullPolicy: {{  .imagePullPolicy }}
+
+          ports:
+          {{ with .ports }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          livenessProbe:
+          {{ with .livenessProbe }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          resources:
+          {{ with .resources }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          
+          volumeMounts:
+            - mountPath: /pki/etcd/ca
+              name: pki-{{- $baseName }}-certs-ca 
+            - mountPath: /pki/etcd/peer
+              name: pki-{{- $baseName }}-{{- $instanceContext }}-certs-peer-{{- $instanceNumber }}
+            - mountPath: /pki/etcd/server
+              name: pki-{{- $baseName }}-{{- $instanceContext }}-certs-server-{{- $instanceNumber }}
+            - mountPath: /var/lib/etcd
+              name: {{ $baseName }}-{{- $instanceContext }}-data
+          {{- with .volumeMounts }} 
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+        {{- end }}
+      {{- end }}
+      
+      volumes:
+        - name: {{ $baseName }}-{{- $instanceContext }}-data
+          persistentVolumeClaim:
+            claimName: {{ $baseName }}-{{- $instanceContext }}-pvc-{{- $instanceNumber }}
+        - secret:
+            secretName: pki-{{- $baseName }}-ca
+          name: pki-{{- $baseName }}-certs-ca
+        - secret:
+            secretName: pki-{{- $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}
+          name: pki-{{- $baseName }}-{{- $instanceContext }}-certs-peer-{{- $instanceNumber }}
+        - secret:
+            secretName: pki-{{- $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}
+          name: pki-{{- $baseName }}-{{- $instanceContext }}-certs-server-{{- $instanceNumber }}
+      {{- with .volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+        {{- end }}
+      {{- end }}
+
+    {{- else }}
+      {{- fail "value for .Values.applications.etcd.extraParams.clusterSize.replicaCount is not corectrly." }}
+    {{- end }}
+
+  {{- end }}
+{{- end }}

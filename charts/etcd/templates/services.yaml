@@ -1,0 +1,108 @@
+{{- $baseName         := include "etcd.name" . -}}
+{{- $selectorLabels   := include "etcd.selectorLabels" . -}}
+{{- $commonLabels     := include "etcd.labels" . -}}
+{{- $currentNamespace := .Release.Namespace -}}
+{{- $listETCD         := list "main" -}}
+{{- $listReplicaCount := until ( int ( float64 ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount))) }}
+
+{{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
+  {{- $listETCD = append $listETCD "events" -}}
+{{- end }}
+
+{{- range $instanceContext := $listETCD }}
+
+  {{- with $.Values.applications.etcd.extraParams.clusterSize }}
+    {{- if has .replicaCount .currentReplicaCount }}
+  {{- end }}
+  
+    {{ range $instanceNumber := $listReplicaCount }}
+
+      {{- with $.Values.applications.etcd.Deployment }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
+
+  {{- with .metadata.labels }}
+  labels:
+    app.kubernetes.io/instance: "{{ $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+{{- with .containers.etcd }}
+spec:
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+
+  {{- with .ports }}
+  ports:
+    {{- range $service := . }}
+    - name: {{ $service.name }}
+      port: {{ $service.containerPort }}
+      protocol: TCP
+      targetPort: {{ $service.name }}
+    {{- end }}
+  {{- end }}
+
+  selector:
+    app.kubernetes.io/instance: "{{ $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $selectorLabels | nindent 4 }}
+    
+  sessionAffinity: None
+  type: ClusterIP
+
+        {{- end }}
+      {{- end }}
+  {{- end }}
+{{- else }}
+  {{- fail "value for .Values.replicaCount is not as expected" }}
+{{- end }}
+
+{{- with $.Values.applications.etcd.deployment }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ $baseName }}-{{- $instanceContext }}"
+
+  {{- with .metadata.labels }}
+  labels:
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+{{- with .containers.etcd }}
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  clusterIP: None
+  {{- with .ports }}
+  ports:
+    {{- range $service := . }}
+    - name: {{ $service.name }}
+      port: {{ $service.containerPort }}
+    {{- end }}
+  {{- end }}
+  selector:
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $selectorLabels | nindent 4 }}
+  
+    {{- end }}
+  {{- end }}
+{{- end }}

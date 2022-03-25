@@ -1,0 +1,220 @@
+
+{{- $baseName         := include "etcd.name" . -}}
+{{- $selectorLabels   := include "etcd.selectorLabels" . -}}
+{{- $commonLabels     := include "etcd.labels" . -}}
+{{- $currentNamespace := .Release.Namespace -}}
+{{- $listETCD         := list "main" -}}
+{{- $listReplicaCount := until ( int ( float64 ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount))) }}
+
+{{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
+  {{- $listETCD = append $listETCD "events" -}}
+{{- end }}
+
+{{- range $instanceContext := $listETCD }}
+
+  {{- with $.Values.applications.etcd.extraParams.clusterSize }}
+  {{- if has .replicaCount .currentReplicaCount }}
+  {{- end }}
+  
+    {{ range $instanceNumber := $listReplicaCount }}
+
+      {{- with $.Values.applications.etcd.Certificates }}
+
+{{- with .peer}}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}"
+
+  {{- with .metadata.labels }}
+  labels:
+    app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  {{- $newDelta       := mul .deltaRenewBeforeByInstance $instanceNumber }}
+  {{- $newRenewBefore := sub .renewBefore $newDelta }}
+  commonName: "{{ $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}"
+  secretName: "pki-{{- $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}"
+  duration: {{ .duration }}{{ .measurement }}
+  renewBefore: {{ $newRenewBefore }}{{ .measurement }}
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+      {{- range $organization := .organizations }}
+      - {{ $organization }}
+      {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .dnsNames }}
+  dnsNames:
+    - "{{ $baseName }}-{{- $instanceContext }}" 
+    - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
+    - "*.{{ $baseName }}-{{- $instanceContext }}"
+    - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
+    - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  issuerRef:
+    name: "{{- $baseName }}-issuer"
+    kind: Issuer
+{{- end }}
+
+{{- with .server }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}"
+
+  {{- with .metadata.labels }}
+  labels:
+    app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
+    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    {{- $commonLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  {{- $newDelta       := mul .deltaRenewBeforeByInstance $instanceNumber }}
+  {{- $newRenewBefore := sub .renewBefore $newDelta }}
+  commonName: "{{ $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}"
+  secretName: "pki-{{- $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}"
+  duration: {{ .duration }}{{ .measurement }}
+  renewBefore: {{ $newRenewBefore }}{{ .measurement }}
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+      {{- range $organization := .organizations }}
+      - {{ $organization }}
+      {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  dnsNames:
+    - "{{ $baseName }}-{{- $instanceContext }}" 
+    - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}.svc"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
+    - "{{ $baseName }}-{{- $instanceContext }}-client"
+    - "{{ $baseName }}-{{- $instanceContext }}-client.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-client.svc"
+    - "*.{{- $baseName }}-{{- $instanceContext }}"
+    - "*.{{- $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
+    - "*.{{- $baseName }}-{{- $instanceContext }}.svc"
+  {{- with .dnsNames }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  issuerRef:
+    name: "{{- $baseName }}-issuer"
+    kind: Issuer
+
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- else }}
+  {{- fail "value for .Values.replicaCount is not carectly" }}
+{{- end }}
+{{- end }}
+
+
+{{- with $.Values.applications.etcd.Certificates.ca }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-ca"
+
+  {{- with .metadata.labels }}
+  labels:
+    {{- $commonLabels | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+spec:
+  commonName: "{{- $baseName }}-ca"
+  secretName: "pki-{{- $baseName }}-ca"
+  duration: {{ .duration }}{{ .measurement }}
+  renewBefore: {{ .renewBefore }}{{ .measurement }}
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+      {{- range $organization := .organizations }}
+      - {{ $organization }}
+      {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  isCA: {{ .isCA }}
+
+  issuerRef:
+    name: {{ .issuerRefName }}
+    kind: Issuer
+
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: "{{- $baseName }}-issuer"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  ca:
+    secretName: "pki-{{- $baseName }}-ca"
