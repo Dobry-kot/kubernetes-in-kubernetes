@@ -8,7 +8,7 @@ applications:
 
       clusterSize:
         currentReplicaCount: [1,3,5]
-        replicaCount: 5
+        replicaCount: 3
 
     Deployment:
       metadata:

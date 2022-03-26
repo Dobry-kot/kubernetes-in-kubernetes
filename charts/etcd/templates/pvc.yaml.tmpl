@@ -1,7 +1,7 @@
 {{- $baseName         := include "etcd.name" . -}}
 {{- $selectorLabels   := include "etcd.selectorLabels" . -}}
 {{- $commonLabels     := include "etcd.labels" . -}}
-{{- $listETCD         := list "main" -}}
+{{- $listETCD         := list "resources" -}}
 {{- $listReplicaCount := until ( int ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount)) }}
 
 {{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
@@ -28,7 +28,7 @@ metadata:
 
   labels:
     app.kubernetes.io/instance: "{{- $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
     {{- toYaml . | nindent 4 }}

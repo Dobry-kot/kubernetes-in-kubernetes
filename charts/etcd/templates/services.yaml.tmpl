@@ -2,7 +2,7 @@
 {{- $selectorLabels   := include "etcd.selectorLabels" . -}}
 {{- $commonLabels     := include "etcd.labels" . -}}
 {{- $currentNamespace := .Release.Namespace -}}
-{{- $listETCD         := list "main" -}}
+{{- $listETCD         := list "resources" -}}
 {{- $listReplicaCount := until ( int ( float64 ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount))) }}
 
 {{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
@@ -27,7 +27,7 @@ metadata:
   {{- with .metadata.labels }}
   labels:
     app.kubernetes.io/instance: "{{ $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -49,13 +49,13 @@ spec:
     - name: {{ $service.name }}
       port: {{ $service.containerPort }}
       protocol: TCP
-      targetPort: {{ $service.name }}
+      targetPort: {{ $service.containerPort }}
     {{- end }}
   {{- end }}
 
   selector:
     app.kubernetes.io/instance: "{{ $baseName }}-{{- $instanceContext }}-{{- $instanceNumber }}"
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $selectorLabels | nindent 4 }}
     
   sessionAffinity: None
@@ -68,7 +68,7 @@ spec:
   {{- fail "value for .Values.replicaCount is not as expected" }}
 {{- end }}
 
-{{- with $.Values.applications.etcd.deployment }}
+{{- with $.Values.applications.etcd.Deployment }}
 ---
 apiVersion: v1
 kind: Service
@@ -77,7 +77,7 @@ metadata:
 
   {{- with .metadata.labels }}
   labels:
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -100,7 +100,7 @@ spec:
     {{- end }}
   {{- end }}
   selector:
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $selectorLabels | nindent 4 }}
   
     {{- end }}

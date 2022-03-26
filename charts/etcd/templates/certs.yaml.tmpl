@@ -3,7 +3,7 @@
 {{- $selectorLabels   := include "etcd.selectorLabels" . -}}
 {{- $commonLabels     := include "etcd.labels" . -}}
 {{- $currentNamespace := .Release.Namespace -}}
-{{- $listETCD         := list "main" -}}
+{{- $listETCD         := list "resources" -}}
 {{- $listReplicaCount := until ( int ( float64 ( $.Values.applications.etcd.extraParams.clusterSize.replicaCount))) }}
 
 {{-  if .Values.applications.etcd.extraParams.dedicatedEtcd.events -}}
@@ -30,7 +30,7 @@ metadata:
   {{- with .metadata.labels }}
   labels:
     app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -67,9 +67,11 @@ spec:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
+    {{- range $instanceSvcEtcd := $listReplicaCount }}
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}.svc"
+    {{- end }}
     - "*.{{ $baseName }}-{{- $instanceContext }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
@@ -96,7 +98,7 @@ metadata:
   {{- with .metadata.labels }}
   labels:
     app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
-    app.kubernetes.io/{{- $instanceContext }}: "{{- $baseName }}-{{- $instanceContext }}"
+    app.kubernetes.io/group: "{{- $baseName }}-{{- $instanceContext }}"
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -132,9 +134,11 @@ spec:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}.svc"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
+    {{- range $instanceSvcEtcd := $listReplicaCount }}
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}.svc"
+    {{- end }}
     - "{{ $baseName }}-{{- $instanceContext }}-client"
     - "{{ $baseName }}-{{- $instanceContext }}-client.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}-client.svc"
