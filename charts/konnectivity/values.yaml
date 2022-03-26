@@ -1,0 +1,76 @@
+---
+applications:
+  konnectivityServer:
+
+    replicas: 3
+
+    labels: {}
+ 
+    nodeSelector: {}
+      
+    tolerations:
+      - key: "node.kubernetes.io/unreachable"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 5
+      - key: "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 5
+
+    affinity:
+      topologyKey: kubernetes.io/hostname
+
+    automountServiceAccountToken: false
+
+    containers:
+      konnectivityServer:
+        image: "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-server:v0.0.24"
+        imagePullPolicy: IfNotPresent
+        entryPoint:
+          command:
+            - "proxy-server"
+          args:
+            - --logtostderr=true
+            - --server-id=$(POD_NAME)
+            - --mode=http-connect
+            - --agent-namespace=kube-system
+        envs: 
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+
+        livenessProbe:
+          failureThreshold: 8
+          initialDelaySeconds: 30
+          timeoutSeconds: 60
+          method: httpGet
+          path: /healthz
+          port: health
+
+        ports: 
+          - containerPort: 8131
+            name: server
+          - containerPort: 8132
+            name: agent
+          - containerPort: 8133
+            name: admin
+          - containerPort: 8134
+            name: health
+
+        volumeMounts: []
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+  
+    volumes: []
+
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+

@@ -1,0 +1,32 @@
+{{- $baseName         := include "konnectivity.name" . -}}
+{{- $commonLabels     := include "konnectivity.labels" . -}}
+{{- $currentNamespace := .Release.Namespace -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $baseName  }}-server-conf
+  labels:
+    {{- $commonLabels | nindent 4 }}
+data:
+  {{ $baseName  }}-server.conf: |
+    apiVersion: v1
+    clusters:
+    - cluster:
+        certificate-authority: /pki/{{ $baseName  }}-server-client/ca.crt
+        server: https://kubernetes-apiserver:6443
+      name: default-cluster
+    contexts:
+    - context:
+        cluster: default-cluster
+        namespace: default
+        user: default-auth
+      name: default-context
+    current-context: default-context
+    kind: Config
+    preferences: {}
+    users:
+    - name: default-auth
+      user:
+        client-certificate: /pki/{{ $baseName  }}-server-client/tls.crt
+        client-key: /pki/{{ $baseName  }}-server-client/tls.key

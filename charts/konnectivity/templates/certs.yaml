@@ -1,0 +1,114 @@
+{{- $baseName         := include "konnectivity.name" . -}}
+{{- $commonLabels     := include "konnectivity.labels" . -}}
+{{- $currentNamespace := .Release.Namespace -}}
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-ca"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  commonName: "{{- $baseName }}-ca"
+  secretName: "pki-{{- $baseName }}-ca"
+  duration: 87600h # 3650d
+  renewBefore: 8760h # 365d
+  subject:
+    organizations:
+    - "{{- $currentNamespace }}"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "cert sign"
+  isCA: true
+  issuerRef:
+    name: "selfsigning-issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: "{{ $baseName }}-issuer"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  ca:
+    secretName: "pki-{{- $baseName }}-ca"
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-server"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  commonName: "{{ $baseName }}-server"
+  secretName: "pki-{{- $baseName }}-server"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "{{ $currentNamespace }}"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "server auth"
+  dnsNames:
+    - "{{ $baseName }}-server"
+    - "{{ $baseName }}-server.{{- $currentNamespace }}"
+    - "{{ $baseName }}-server.{{- $currentNamespace }}.svc"
+    - "localhost"
+  ipAddresses:
+  - "127.0.0.1"
+  issuerRef:
+    name: "{{- $baseName }}-issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-client"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  commonName: "{{ $baseName }}-client"
+  secretName: "pki-{{- $baseName }}-client"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "system:masters"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "{{- $baseName }}-issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{- $baseName }}-server-client"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+spec:
+  commonName: "system:{{- $baseName }}-server"
+  secretName: "pki-{{- $baseName }}-server-client"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "system:{{- $baseName }}-server"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
