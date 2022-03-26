@@ -67,11 +67,9 @@ spec:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
-    {{- range $instanceSvcEtcd := $listReplicaCount }}
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}.svc"
-    {{- end }}
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
     - "*.{{ $baseName }}-{{- $instanceContext }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
@@ -134,11 +132,9 @@ spec:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}.svc"
-    {{- range $instanceSvcEtcd := $listReplicaCount }}
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceSvcEtcd }}.{{- $currentNamespace }}.svc"
-    {{- end }}
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
     - "{{ $baseName }}-{{- $instanceContext }}-client"
     - "{{ $baseName }}-{{- $instanceContext }}-client.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}-client.svc"
