@@ -3,23 +3,25 @@
 {{- $selectorLabels   := include "konnectivity.selectorLabels" . -}}
 {{- $commonLabels     := include "konnectivity.labels" . -}}
 {{- $currentNamespace := .Release.Namespace -}}
-{{- $konnectivityServerReplicas := $.Values.applications.konnectivityServer.replicas  }}
 
-{{- with $.Values.applications.konnectivityServer }}
+{{- with .Values.applications.konnectivityServer.Deployment }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: "{{ $baseName }}-server"
+
   labels:
     {{- $commonLabels | nindent 4 }}
-    {{- with .labels }}
+  {{- with .metadata.labels }}
     {{- toYaml . | nindent 4 }}
-    {{- end }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
   annotations:
-    {{- with .annotations }}
     {{- toYaml . | nindent 4 }}
-    {{- end }}
+  {{- end }}
+
 spec:
   replicas: {{ .replicas }}
 
@@ -36,17 +38,18 @@ spec:
     metadata:
       labels:
         {{- $commonLabels | nindent 8 }}
-        {{- with .labels }}
+      {{- with .metadata.labels }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- end }}
+
+      {{- with .metadata.annotations }}
       annotations:
-        {{- with .annotations }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- end }}
 
     spec:
   
-      {{ with .tolerations }}
+      {{- with .tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -63,90 +66,73 @@ spec:
 
       automountServiceAccountToken: {{ .automountServiceAccountToken }}
 
+      {{- with .containers.konnectivityServer }}
       containers:
-        {{- with .containers.konnectivityServer }}
         - name: {{ $baseName }}-server
           image: {{ .image }}
           imagePullPolicy: {{ .imagePullPolicy }}
 
-          {{ with .resources }}
+          {{- with .resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
 
-          {{ with .ports }}
+          {{- with .ports }}
           ports:
             {{- toYaml . | nindent 12 }}
           {{- end }}
 
-          {{ with .envs }}
+          {{- with .envs }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           
-          volumeMounts:
-            - mountPath: /pki/apiserver
-              name: pki-apiserver
-            - mountPath: /pki/{{ $baseName }}-server
-              name: pki-{{ $baseName }}server
-            - mountPath: /pki/{{ $baseName }}-server-client
-              name: pki-{{ $baseName }}-server-client
-            - mountPath: /etc/kubernetes/
-              name: kubeconfig
-              readOnly: true
-            {{- with .custom }}
+          {{- with .entryPoint.command }}
+          command:
             {{- toYaml . | nindent 12 }}
-            {{- end }}
-
-          command: {{ .entryPoint.command }}
+          {{- end }}
           args:
             - --server-ca-cert=/pki/{{ $baseName }}-server/ca.crt
             - --server-cert=/pki/{{ $baseName }}-server/tls.crt
             - --server-key=/pki/{{ $baseName }}-server/tls.key
-            - --cluster-cert=/pki/apiserver/tls.crt
-            - --cluster-key=/pki/apiserver/tls.key
             - --agent-service-account={{ $baseName }}-agent
             - --kubeconfig=/etc/kubernetes/{{ $baseName }}-server.conf
             - --authentication-audience=system:{{ $baseName }}-server
-            - --server-count={{- $konnectivityServerReplicas }}
-            {{- range .ports  }}
-              {{- if eq .name "server" }}
+          {{- range .ports  }}
+            {{- if eq .name "server" }}
             - --server-port={{- .containerPort }}
-              {{- end }}
-              {{- if eq .name "agent" }}
+            {{- end }}
+            {{- if eq .name "agent" }}
             - --agent-port={{- .containerPort }}
-              {{- end }}
-              {{- if eq .name "admin" }}
+            {{- end }}
+            {{- if eq .name "admin" }}
             - --admin-port={{- .containerPort }}
-              {{- end }}
-              {{- if eq .name "health" }}
+            {{- end }}
+            {{- if eq .name "health" }}
             - --health-port={{- .containerPort }}
-              {{- end }}
             {{- end }}
-            {{- with .entryPoint.args }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-
-          {{ with .livenessProbe }}
-          livenessProbe:
-            failureThreshold: {{ .failureThreshold  }}
-            initialDelaySeconds: {{ .initialDelaySeconds }}
-            timeoutSeconds: {{ .timeoutSeconds }}
-            {{ .method }}:
-              path: {{ .path }}
-              {{- range .ports  }}
-                {{- if eq .name "health" }}
-              port: {{ .containerPort }}
-                {{- end }}
-              {{- end }}
-              scheme: HTTP
           {{- end }}
-        {{- end }}
+          {{- with .entryPoint.args }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          volumeMounts:
+            - mountPath: /pki/{{ $baseName }}-server
+              name: pki-{{ $baseName }}server
+            - mountPath: /pki/{{ $baseName }}-server-client
+              name: pki-{{ $baseName }}-server-client
+          {{- with .volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+      {{- end }}
 
       volumes:
-        - secret:
-            secretName: "pki-apiserver-server"
-          name: pki-apiserver
         - secret:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}server

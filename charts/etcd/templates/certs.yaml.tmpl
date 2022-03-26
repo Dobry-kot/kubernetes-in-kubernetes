@@ -48,14 +48,14 @@ spec:
   duration: {{ .duration }}{{ .measurement }}
   renewBefore: {{ $newRenewBefore }}{{ .measurement }}
 
-  {{- with .subject }}
+
   subject:
     organizations:
       - "{{- $currentNamespace }}"
-      {{- range $organization := .organizations }}
+      {{- range $organization := .subject.organizations }}
       - {{ $organization }}
       {{- end }}
-  {{- end }}
+
 
   {{- with .usages }}
   usages:
