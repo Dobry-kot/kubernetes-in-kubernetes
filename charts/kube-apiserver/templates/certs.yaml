@@ -1,0 +1,281 @@
+
+{{- $baseName         := include "kube-apiserver.name" . -}}
+{{- $selectorLabels   := include "kube-apiserver.selectorLabels" . -}}
+{{- $commonLabels     := include "kube-apiserver.labels" . -}}
+{{- $currentNamespace := .Release.Namespace -}}
+
+{{- $serviceKonnectivityServerLb  := (lookup "v1" "Service" $currentNamespace "konnectivity-server-svc") }}
+{{- $serviceKonnectivityServerIP  := $serviceKonnectivityServerLb.status.loadBalancer.ingress }}
+
+{{- $serviceApiServerLb           := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
+
+{{- $serviceApiServerIP           := $serviceApiServerLb.status.loadBalancer.ingress }}
+
+{{- with .Values.applications.kubeApiserver.Certificates }}
+{{- with .ca}}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-front-proxy-ca"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  commonName: "pki-{{ $baseName }}-front-proxy-ca"
+  secretName: "pki-{{ $baseName }}-front-proxy-ca"
+  duration: "{{ .duration }}{{- .measurement }}"
+  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+    {{- range $organization := .subject.organizations }}
+      - "{{ $organization }}"
+    {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  isCA: {{ .isCA }}
+  issuerRef:
+    name: "{{ .issuerRefName }}"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: "front-proxy-issuer"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ca:
+    secretName: "pki-{{ $baseName }}-front-proxy-ca"
+{{- end }}
+
+{{- with .kubeletClient }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{ $baseName }}-kubelet-client"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  commonName: "pki-{{ $baseName }}-kubelet-client"
+  secretName: "pki-{{ $baseName }}-kubelet-client"
+  duration: "{{ .duration }}{{- .measurement }}"
+  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+    {{- range $organization := .organizations }}
+      - "{{ $organization }}"
+    {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .dnsNames }}
+  dnsNames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+{{- end }}
+{{- with .apiServer }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{ $baseName }}-server"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  commonName: "pki-{{ $baseName }}-server"
+  secretName: "pki-{{ $baseName }}-server"
+  duration: "{{ .duration }}{{- .measurement }}"
+  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+    {{- range $organization := .subject.organizations }}
+      - "{{ $organization }}"
+    {{- end }}
+
+ {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  dnsNames:
+    - "apiserver.{{- $currentNamespace}}"
+    - "apiserver.{{- $currentNamespace}}.svc"
+    - "{{ $baseName }}-svc"
+  {{- with .dnsNames }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  ipAddresses:
+  {{- range $serviceKonnectivityServerIP }}
+    - "{{ .ip }}"
+  {{- end }}
+  {{- range $serviceApiServerIP }}
+    - "{{ .ip }}"
+  {{- end }}
+  {{- with .ipAddresses }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+{{- end }}
+
+{{- with .etcdClient }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{ $baseName }}-etcd-client"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  commonName: "pki-{{ $baseName }}-etcd-client"
+  secretName: "pki-{{ $baseName }}-etcd-client"
+  duration: "{{ .duration }}{{- .measurement }}"
+  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+    {{- with .organizations }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .dnsNames }}
+  dnsNames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  issuerRef:
+    name: "etcd-issuer"
+    kind: Issuer
+{{- end }}
+
+{{- with .proxyClient }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-{{ $baseName }}-front-proxy-client"
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  commonName: "pki-{{ $baseName }}-front-proxy-client"
+  secretName: "pki-{{ $baseName }}-front-proxy-client"
+  duration: "{{ .duration }}{{- .measurement }}"
+  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+
+  {{- with .subject }}
+  subject:
+    organizations:
+      - "{{- $currentNamespace }}"
+    {{- with .organizations }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+
+  {{- with .usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .dnsNames }}
+  dnsNames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with .ipAddresses }}
+  ipAddresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  issuerRef:
+    name: "front-proxy-issuer"
+    kind: Issuer
+{{- end }}
+{{- end }}

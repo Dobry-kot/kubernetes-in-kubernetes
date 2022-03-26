@@ -1,0 +1,199 @@
+---
+applications:
+
+  kubeApiserver:
+
+    Deployment:
+      replicas: 3
+      oidc:
+        enable: false
+      metadata:
+        labels: {}
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+      nodeSelector: {}
+        
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 5
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 5
+
+      affinity:
+        topologyKey: kubernetes.io/hostname
+
+      automountServiceAccountToken: false
+
+      containers:
+        kubeApiserver:
+          image: "k8s.gcr.io/kube-apiserver:v1.21.3"
+          imagePullPolicy: IfNotPresent
+          entryPoint:
+            command:
+              - "kube-apiserver"
+            args:
+              - --allow-privileged=true
+              - --authorization-mode=Node,RBAC
+              - --bind-address=0.0.0.0
+              - --enable-admission-plugins=NodeRestriction
+              - --enable-bootstrap-token-auth=true
+              - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+              - --requestheader-extra-headers-prefix=X-Remote-Extra-
+              - --requestheader-group-headers=X-Remote-Group
+              - --requestheader-username-headers=X-Remote-User
+              - --service-account-key-file=/pki/sa/tls.crt
+              - --service-account-signing-key-file=/pki/sa/tls.key
+              - --api-audiences=system:konnectivity-server
+              - --service-account-issuer=https://kubernetes.default.svc.cluster.local
+              - --egress-selector-config-file=/etc/kubernetes/egress-selector-configuration.yaml
+              - --api-audiences=system:konnectivity-server
+          envs:
+            - name: SVC_NAME
+              value: etcd
+          livenessProbe:
+            failureThreshold: 8
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+            httpGet:
+              path: /livez
+              port: client
+              scheme: HTTP
+          ports:
+            - containerPort: 6443
+              name: client
+          volumeMounts:
+            - mountPath: /etc/kubernetes
+              name: apiserver-config
+            - mountPath: /pki/sa
+              name: pki-sa
+            - mountPath: /pki/konnectivity-client
+              name: pki-konnectivity-client
+            # - mountPath: /opt/bridge/pki/oidc/
+            #   name: pki-certs-ca
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - configMap:
+            name: "apiserver-config"
+          name: apiserver-config
+        - secret:
+            secretName: "pki-sa"
+          name: pki-sa
+        - secret:
+            secretName: "pki-konnectivity-client"
+          name: pki-konnectivity-client
+        # - secret:
+        #     secretName: pki-ca
+        #   name: pki-certs-ca
+
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 1
+
+    Certificates:
+      ca:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "cert sign"
+        isCA: true
+        issuerRefName: selfsigning-issuer
+      kubeletClient:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations:
+            - "system:masters"
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "client auth"
+        dnsNames: []
+        ipAddresses: []
+      apiServer:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "server auth"
+        dnsNames:
+          - "localhost"
+          - "apiserver"
+        ipAddresses:
+          - "127.0.0.1"
+      etcdClient:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations:
+            - "system:masters"
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "client auth"
+        dnsNames: []
+        ipAddresses: []
+      etcdClient:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations:
+            - "system:masters"
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "client auth"
+        dnsNames: []
+        ipAddresses: []
+      proxyClient:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations:
+            - "system:masters"
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "client auth"
+        dnsNames: []
+        ipAddresses: []
