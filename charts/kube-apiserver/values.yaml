@@ -3,10 +3,15 @@ applications:
 
   kubeApiserver:
 
-    Deployment:
-      replicas: 3
+    extraParams:
+      serviceCIDR: 29.64.0.0/16
       oidc:
         enable: false
+
+    Deployment:
+    
+      replicas: 3
+
       metadata:
         labels: {}
         annotations:
