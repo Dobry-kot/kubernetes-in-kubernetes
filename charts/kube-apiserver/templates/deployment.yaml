@@ -8,10 +8,11 @@
 {{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
 
 {{- with .Values.applications.kubeApiserver }}
-{{- $oidcStatus := .extraParams.oidc.enable }}
-{{- $serviceCIDR := .extraParams.serviceCIDR}}
 
-{{- with .Deployment }}
+  {{- $oidcStatus := .extraParams.oidc.enable }}
+  {{- $serviceCIDR := .extraParams.serviceCIDR}}
+
+  {{- with .Deployment }}
 
 ---
 apiVersion: apps/v1
