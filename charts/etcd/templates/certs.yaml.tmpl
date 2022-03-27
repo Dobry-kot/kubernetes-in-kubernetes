@@ -48,14 +48,14 @@ spec:
   duration: {{ .duration }}{{ .measurement }}
   renewBefore: {{ $newRenewBefore }}{{ .measurement }}
 
-  {{- with .subject }}
+
   subject:
     organizations:
       - "{{- $currentNamespace }}"
-      {{- range $organization := .organizations }}
+      {{- range $organization := .subject.organizations }}
       - {{ $organization }}
       {{- end }}
-  {{- end }}
+
 
   {{- with .usages }}
   usages:
@@ -132,9 +132,11 @@ spec:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}.svc"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceNumber }}.{{- $currentNamespace }}.svc"
+    {{- range $instanceETCD := $listReplicaCount }}
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceETCD }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceETCD }}.{{- $currentNamespace }}"
+    - "{{ $baseName }}-{{- $instanceContext }}-svc-{{- $instanceETCD }}.{{- $currentNamespace }}.svc"
+    {{- end }}
     - "{{ $baseName }}-{{- $instanceContext }}-client"
     - "{{ $baseName }}-{{- $instanceContext }}-client.{{- $currentNamespace }}"
     - "{{ $baseName }}-{{- $instanceContext }}-client.svc"

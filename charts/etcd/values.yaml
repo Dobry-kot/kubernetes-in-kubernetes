@@ -11,6 +11,7 @@ applications:
         replicaCount: 3
 
     Deployment:
+      replicas: 1
       metadata:
         labels: {}
         annotations:
@@ -37,8 +38,8 @@ applications:
           name: etcd
           image: "k8s.gcr.io/etcd:3.4.13-0"
           imagePullPolicy: IfNotPresent
-          command:
-            path: 
+          entryPoint:
+            command:
               - etcd
             args: 
               - --data-dir=/var/lib/etcd
@@ -161,5 +162,5 @@ applications:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
-        isCA: true
+        isCA: "true"
         issuerRefName: selfsigning-issuer
