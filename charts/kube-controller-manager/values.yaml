@@ -1,0 +1,131 @@
+---
+applications:
+
+  kubeControllerManager:
+
+    Deployment:
+      replicas: 3
+      oidc:
+        enable: false
+      metadata:
+        labels: {}
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+      nodeSelector: {}
+        
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 5
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 5
+
+      affinity:
+        topologyKey: kubernetes.io/hostname
+
+      automountServiceAccountToken: false
+
+      containers:
+        kubeControllerManager:
+          image: "k8s.gcr.io/kube-controller-manager:v1.21.3"
+          imagePullPolicy: IfNotPresent
+          entryPoint:
+            command:
+              - "kube-controller-manager"
+            args:
+              - --bind-address=0.0.0.0
+              - --client-ca-file=/pki/ca/tls.crt
+              - --cluster-name=kubernetes
+              - --cluster-signing-cert-file=/pki/ca/tls.crt
+              - --cluster-signing-key-file=/pki/ca/tls.key
+              - --controllers=*,bootstrapsigner,tokencleaner
+              - --root-ca-file=/pki/ca/tls.crt
+              - --secure-port=10257
+              - --service-account-private-key-file=/pki/sa/tls.key
+              - --use-service-account-credentials=true
+              - --node-monitor-period=2s
+              - --node-monitor-grace-period=16s
+              - --pod-eviction-timeout=30s
+              - --leader-elect=true
+          envs:
+            - name: SVC_NAME
+              value: etcd
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /healthz
+              port: 10257
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+          ports:
+            - containerPort: 6443
+              name: client
+          volumeMounts:
+            - mountPath: /etc/kubernetes/
+              name: kubeconfig
+              readOnly: true
+            - mountPath: /pki/ca
+              name: pki-ca
+            - mountPath: /pki/kube-apiserver-proxy-client
+              name: pki-kube-apiserver-proxy-client
+            - mountPath: /pki/sa
+              name: pki-sa
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - secret:
+            secretName: "pki-ca"
+          name: pki-ca
+        - secret:
+            secretName: "pki-kube-apiserver-proxy-client"
+          name: pki-kube-apiserver-proxy-client
+        - secret:
+            secretName: "pki-sa"
+          name: pki-sa
+
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 1
+
+    Certificates:
+      client:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "client auth"
+        dnsNames: []
+        ipAddresses: []
+      server:
+        metadata:
+          labels: {}
+          annotations: {}
+        duration: 8760
+        renewBefore: 4380
+        measurement: h
+        subject:
+          organizations: []
+        usages:
+          - "signing"
+          - "key encipherment"
+          - "server auth"
+        dnsNames:
+          - "localhost"
+        ipAddresses:
+          - "127.0.0.1"
