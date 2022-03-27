@@ -13,7 +13,7 @@ data:
         proxyProtocol: HTTPConnect
         transport:
           tcp:
-            url: "https://konnectivity-server:8131"
+            url: "https://konnectivity-server-svc:8090"
             TLSConfig:
               caBundle: /pki/konnectivity-client/ca.crt
               clientKey: /pki/konnectivity-client/tls.key

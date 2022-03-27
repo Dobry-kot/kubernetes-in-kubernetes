@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/instance: kube-apiserver
     app.kubernetes.io/name: kube-apiserver
-  name: kubernetes-apiserver
+  name: kube-apiserver-svc
 spec:
   ipFamilies:
     - IPv4

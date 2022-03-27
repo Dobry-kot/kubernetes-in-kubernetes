@@ -62,7 +62,7 @@ applications:
             httpGet:
               path: /livez
               port: client
-              scheme: HTTP
+              scheme: HTTPS
           ports:
             - containerPort: 6443
               name: client
@@ -146,25 +146,8 @@ applications:
           - "server auth"
         dnsNames:
           - "localhost"
-          - "apiserver"
         ipAddresses:
           - "127.0.0.1"
-      etcdClient:
-        metadata:
-          labels: {}
-          annotations: {}
-        duration: 8760
-        renewBefore: 4380
-        measurement: h
-        subject:
-          organizations:
-            - "system:masters"
-        usages:
-          - "signing"
-          - "key encipherment"
-          - "client auth"
-        dnsNames: []
-        ipAddresses: []
       etcdClient:
         metadata:
           labels: {}

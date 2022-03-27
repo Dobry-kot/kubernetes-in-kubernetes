@@ -17,7 +17,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-front-proxy-ca"
+  name: "pki-{{ $baseName }}-proxy-ca"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -29,8 +29,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "pki-{{ $baseName }}-front-proxy-ca"
-  secretName: "pki-{{ $baseName }}-front-proxy-ca"
+  commonName: "{{ $baseName }}-proxy-ca"
+  secretName: "pki-{{ $baseName }}-proxy-ca"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
   subject:
@@ -54,7 +54,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: "front-proxy-issuer"
+  name: "{{ $baseName }}-proxy-issuer"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -67,7 +67,7 @@ metadata:
   {{- end }}
 spec:
   ca:
-    secretName: "pki-{{ $baseName }}-front-proxy-ca"
+    secretName: "pki-{{ $baseName }}-proxy-ca"
 {{- end }}
 
 {{- with .kubeletClient }}
@@ -87,7 +87,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "pki-{{ $baseName }}-kubelet-client"
+  commonName: "{{ $baseName }}-kubelet-client"
   secretName: "pki-{{ $baseName }}-kubelet-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
@@ -95,7 +95,6 @@ spec:
   {{- with .subject }}
   subject:
     organizations:
-      - "{{- $currentNamespace }}"
     {{- range $organization := .organizations }}
       - "{{ $organization }}"
     {{- end }}
@@ -137,7 +136,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "pki-{{ $baseName }}-server"
+  commonName: "{{ $baseName }}-server"
   secretName: "pki-{{ $baseName }}-server"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
@@ -155,8 +154,9 @@ spec:
   {{- end }}
 
   dnsNames:
-    - "apiserver.{{- $currentNamespace}}"
-    - "apiserver.{{- $currentNamespace}}.svc"
+    - "{{ $baseName }}"
+    - "{{ $baseName }}.{{- $currentNamespace}}"
+    - "{{ $baseName }}.{{- $currentNamespace}}.svc"
     - "{{ $baseName }}-svc"
   {{- with .dnsNames }}
     {{- toYaml . | nindent 4 }}
@@ -194,7 +194,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "pki-{{ $baseName }}-etcd-client"
+  commonName: "{{ $baseName }}-etcd-client"
   secretName: "pki-{{ $baseName }}-etcd-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
@@ -202,7 +202,6 @@ spec:
   {{- with .subject }}
   subject:
     organizations:
-      - "{{- $currentNamespace }}"
     {{- with .organizations }}
       {{- toYaml . | nindent 6 }}
     {{- end }}
@@ -233,7 +232,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-front-proxy-client"
+  name: "pki-{{ $baseName }}-proxy-client"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -245,15 +244,14 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "pki-{{ $baseName }}-front-proxy-client"
-  secretName: "pki-{{ $baseName }}-front-proxy-client"
+  commonName: "{{ $baseName }}-proxy-client"
+  secretName: "pki-{{ $baseName }}-proxy-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
 
   {{- with .subject }}
   subject:
     organizations:
-      - "{{- $currentNamespace }}"
     {{- with .organizations }}
       {{- toYaml . | nindent 6 }}
     {{- end }}
@@ -275,7 +273,7 @@ spec:
   {{- end }}
 
   issuerRef:
-    name: "front-proxy-issuer"
+    name: "{{ $baseName }}-proxy-issuer"
     kind: Issuer
 {{- end }}
 {{- end }}
