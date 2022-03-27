@@ -7,8 +7,12 @@
 {{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
 {{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
 
-{{- with .Values.applications.kubeApiserver.Deployment }}
-{{- $oidcStatus := .oidc.enable }}
+{{- with .Values.applications.kubeApiserver }}
+{{- $oidcStatus := .extraParams.oidc.enable }}
+{{- $serviceCIDR := .extraParams.serviceCIDR}}
+
+{{- with .Deployment }}
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -103,7 +107,7 @@ spec:
             - --secure-port={{- .containerPort }}
             {{- end }}
           {{- end }}
-            - --service-cluster-ip-range=10.32.0.0/24
+            - --service-cluster-ip-range={{- $serviceCIDR }}
             - --advertise-address={{- (first $serviceApiServerIP).ip }}
           {{- if $oidcStatus }}
             - --oidc-issuer-url=https://keycloak.ingress.dobry-kot.ru/realms/terra-kube
