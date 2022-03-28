@@ -88,11 +88,17 @@ spec:
           command:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          args:
-            - --proxy-client-cert-file=/pki/pki-{{ $baseName }}-proxy-client/tls.crt
-            - --proxy-client-key-file=/pki/pki-{{ $baseName }}-proxy-client/tls.key
-            - --requestheader-allowed-names={{ $baseName }}-proxy-client
-            - --requestheader-client-ca-file=/pki/pki-{{ $baseName }}-proxy-client/ca.crt
+          args: 
+            ##-> https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+            - --proxy-client-cert-file=/pki/pki-{{ $baseName }}-front-proxy-client/tls.crt
+            - --proxy-client-key-file=/pki/pki-{{ $baseName }}-front-proxy-client/tls.key
+            - --requestheader-client-ca-file=/pki/pki-{{ $baseName }}-front-proxy-client/ca.crt
+            - --requestheader-allowed-names=front-proxy-client
+            - --requestheader-extra-headers-prefix=X-Remote-Extra-
+            - --requestheader-group-headers=X-Remote-Group
+            - --requestheader-username-headers=X-Remote-User
+            ## ->
+            ## END
             - --tls-cert-file=/pki/pki-{{ $baseName }}-server/tls.crt
             - --tls-private-key-file=/pki/pki-{{ $baseName }}-server/tls.key
             - --client-ca-file=/pki/pki-{{ $baseName }}-server/ca.crt
@@ -143,8 +149,8 @@ spec:
           {{- end }}
 
           volumeMounts:
-            - mountPath: /pki/pki-{{ $baseName }}-proxy-client
-              name: pki-{{ $baseName }}-proxy-client
+            - mountPath: /pki/pki-{{ $baseName }}-front-proxy-client
+              name: pki-{{ $baseName }}-front-proxy-client
             - mountPath: /pki/pki-{{ $baseName }}-server
               name: pki-{{ $baseName }}-server
             - mountPath: /pki/pki-{{ $baseName }}-etcd-client
@@ -157,8 +163,8 @@ spec:
       {{- end }}
       volumes:
         - secret:
-            secretName: "pki-{{ $baseName }}-proxy-client"
-          name: pki-{{ $baseName }}-proxy-client
+            secretName: "pki-{{ $baseName }}-front-proxy-client"
+          name: pki-{{ $baseName }}-front-proxy-client
         - secret:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}-server
@@ -172,3 +178,4 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     {{- end }}
+  {{- end }}

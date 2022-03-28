@@ -17,7 +17,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-proxy-ca"
+  name: "pki-{{ $baseName }}-front-proxy-ca"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -29,8 +29,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "{{ $baseName }}-proxy-ca"
-  secretName: "pki-{{ $baseName }}-proxy-ca"
+  commonName: "front-proxy-ca"
+  secretName: "pki-{{ $baseName }}-front-proxy-ca"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
   subject:
@@ -54,7 +54,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: "{{ $baseName }}-proxy-issuer"
+  name: "front-proxy-issuer"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -67,7 +67,7 @@ metadata:
   {{- end }}
 spec:
   ca:
-    secretName: "pki-{{ $baseName }}-proxy-ca"
+    secretName: "pki-{{ $baseName }}-front-proxy-ca"
 {{- end }}
 
 {{- with .kubeletClient }}
@@ -232,7 +232,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-proxy-client"
+  name: "pki-{{ $baseName }}-front-proxy-client"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -244,8 +244,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "{{ $baseName }}-proxy-client"
-  secretName: "pki-{{ $baseName }}-proxy-client"
+  commonName: "front-proxy-client"
+  secretName: "pki-{{ $baseName }}-front-proxy-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
 
@@ -273,7 +273,7 @@ spec:
   {{- end }}
 
   issuerRef:
-    name: "{{ $baseName }}-proxy-issuer"
+    name: "front-proxy-issuer"
     kind: Issuer
 {{- end }}
 {{- end }}

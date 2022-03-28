@@ -56,7 +56,7 @@ applications:
               - --api-audiences=system:konnectivity-server
               - --service-account-issuer=https://kubernetes.default.svc.cluster.local
               - --egress-selector-config-file=/etc/kubernetes/egress-selector-configuration.yaml
-              - --api-audiences=system:konnectivity-server
+
           envs:
             - name: SVC_NAME
               value: etcd
