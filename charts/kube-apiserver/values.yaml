@@ -42,21 +42,27 @@ applications:
             command:
               - "kube-apiserver"
             args:
+              ##-> https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+              - --proxy-client-cert-file=/pki/pki-kube-apiserver-front-proxy-client/tls.crt
+              - --proxy-client-key-file=/pki/pki-kube-apiserver-front-proxy-client/tls.key
+              - --requestheader-client-ca-file=/pki/pki-kube-apiserver-front-proxy-client/ca.crt
+              - --requestheader-allowed-names=front-proxy-client
+              - --requestheader-extra-headers-prefix=X-Remote-Extra-
+              - --requestheader-group-headers=X-Remote-Group
+              - --requestheader-username-headers=X-Remote-User
+              ## ->
+              ## END
               - --allow-privileged=true
               - --authorization-mode=Node,RBAC
               - --bind-address=0.0.0.0
               - --enable-admission-plugins=NodeRestriction
               - --enable-bootstrap-token-auth=true
               - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-              - --requestheader-extra-headers-prefix=X-Remote-Extra-
-              - --requestheader-group-headers=X-Remote-Group
-              - --requestheader-username-headers=X-Remote-User
               - --service-account-key-file=/pki/sa/tls.crt
               - --service-account-signing-key-file=/pki/sa/tls.key
               - --api-audiences=system:konnectivity-server
               - --service-account-issuer=https://kubernetes.default.svc.cluster.local
               - --egress-selector-config-file=/etc/kubernetes/egress-selector-configuration.yaml
-
           envs:
             - name: SVC_NAME
               value: etcd
@@ -78,6 +84,8 @@ applications:
               name: pki-sa
             - mountPath: /pki/konnectivity-client
               name: pki-konnectivity-client
+            - mountPath: /pki/pki-kube-apiserver-front-proxy-client
+              name: pki-kube-apiserver-front-proxy-client
             # - mountPath: /opt/bridge/pki/oidc/
             #   name: pki-certs-ca
           resources:
@@ -94,6 +102,9 @@ applications:
         - secret:
             secretName: "pki-konnectivity-client"
           name: pki-konnectivity-client
+        - secret:
+            secretName: "pki-kube-apiserver-front-proxy-client"
+          name: pki-kube-apiserver-front-proxy-client
         # - secret:
         #     secretName: pki-ca
         #   name: pki-certs-ca

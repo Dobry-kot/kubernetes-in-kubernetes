@@ -1,10 +1,10 @@
 
-{{- $baseName           := include "kube-controller-manager.name" . -}}
-{{- $selectorLabels     := include "kube-controller-manager.selectorLabels" . -}}
-{{- $commonLabels       := include "kube-controller-manager.labels" . -}}
+{{- $baseName           := include "kube-scheduler.name" . -}}
+{{- $selectorLabels     := include "kube-scheduler.selectorLabels" . -}}
+{{- $commonLabels       := include "kube-scheduler.labels" . -}}
 {{- $currentNamespace   := .Release.Namespace -}}
 
-{{- with .Values.applications.kubeControllerManager.Deployment }}
+{{- with .Values.applications.kubeScheduler.Deployment }}
 
 ---
 apiVersion: apps/v1
@@ -16,12 +16,10 @@ metadata:
   {{- with .metadata.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 spec:
   replicas: {{ .replicas }}
 
@@ -41,13 +39,12 @@ spec:
       {{- with .metadata.labels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
       {{- with .metadata.annotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    spec:
 
+    spec:
       {{- with .nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -70,7 +67,7 @@ spec:
 
       automountServiceAccountToken: {{ .automountServiceAccountToken }}
 
-      {{- with .containers.kubeControllerManager }}
+      {{- with .containers.kubeScheduler }}
       containers:
         - name: {{ $baseName }}
           image: {{ .image }}
@@ -81,13 +78,15 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
-            - --authentication-kubeconfig=/etc/kubernetes/{{ $baseName }}.conf
-            - --authorization-kubeconfig=/etc/kubernetes/{{ $baseName }}.conf
-            - --kubeconfig=/etc/kubernetes/{{ $baseName }}.conf
-            - --requestheader-client-ca-file=/pki/kube-apiserver-proxy-client/tls.crt
+            - --authentication-kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
+            - --authorization-kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
+            - --kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
             - --tls-cert-file=/pki/{{ $baseName }}-server/tls.crt
             - --tls-private-key-file=/pki/{{ $baseName }}-server/tls.key
-
+          {{- with .entryPoint.args }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          
           {{- with .ports }}
           ports:
             {{- toYaml . | nindent 12 }}
@@ -110,7 +109,7 @@ spec:
 
           volumeMounts:
             - mountPath: /pki/{{ $baseName }}-server
-              name: pki-{{ $baseName }}-server
+              name: pki-{{ $baseName }}
             - mountPath: /pki/{{ $baseName }}-client
               name: pki-{{ $baseName }}-client
           {{- with .volumeMounts }}
@@ -123,7 +122,7 @@ spec:
           name: kubeconfig
         - secret:
             secretName: "pki-{{ $baseName }}-server"
-          name: pki-{{ $baseName }}-server
+          name: pki-{{ $baseName }}
         - secret:
             secretName: "pki-{{ $baseName }}-client"
           name: pki-{{ $baseName }}-client

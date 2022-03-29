@@ -47,7 +47,6 @@ Selector labels
 */}}
 {{- define "konnectivity.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "konnectivity.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*

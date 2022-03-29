@@ -1,0 +1,43 @@
+{{- $baseName           := include "kube-scheduler.name" . -}}
+{{- $selectorLabels     := include "kube-scheduler.selectorLabels" . -}}
+{{- $commonLabels       := include "kube-scheduler.labels" . -}}
+{{- $currentNamespace   := .Release.Namespace -}}
+
+{{- with .Values.applications.kubeScheduler.Deployment }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $baseName }}-conf
+  labels:
+    {{- $commonLabels | nindent 4 }}
+  {{- with .metadata.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .metadata.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  {{ $baseName }}.conf: |
+    apiVersion: v1
+    clusters:
+    - cluster:
+        certificate-authority: /pki/{{ $baseName }}-client/ca.crt
+        server: https://kube-apiserver-svc:6443
+      name: default-cluster
+    contexts:
+    - context:
+        cluster: default-cluster
+        namespace: default
+        user: default-auth
+      name: default-context
+    current-context: default-context
+    kind: Config
+    preferences: {}
+    users:
+    - name: default-auth
+      user:
+        client-certificate: /pki/{{ $baseName }}-client/tls.crt
+        client-key: /pki/{{ $baseName }}-client/tls.key
+{{- end }}

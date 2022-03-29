@@ -21,6 +21,3 @@
 .idea/
 *.tmproj
 .vscode/
-charts/main
-charts/kube-apiserver/templates/service.yaml
-charts/kube-controller-manager/templates/service.yaml

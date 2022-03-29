@@ -17,7 +17,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-front-proxy-ca"
+  name: "pki-kube-apiserver-front-proxy-ca"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -30,7 +30,7 @@ metadata:
   {{- end }}
 spec:
   commonName: "front-proxy-ca"
-  secretName: "pki-{{ $baseName }}-front-proxy-ca"
+  secretName: "pki-kube-apiserver-front-proxy-ca"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
   subject:
@@ -67,7 +67,7 @@ metadata:
   {{- end }}
 spec:
   ca:
-    secretName: "pki-{{ $baseName }}-front-proxy-ca"
+    secretName: "pki-kube-apiserver-front-proxy-ca"
 {{- end }}
 
 {{- with .kubeletClient }}
@@ -232,7 +232,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-front-proxy-client"
+  name: "pki-kube-apiserver-front-proxy-client"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -245,7 +245,7 @@ metadata:
   {{- end }}
 spec:
   commonName: "front-proxy-client"
-  secretName: "pki-{{ $baseName }}-front-proxy-client"
+  secretName: "pki-kube-apiserver-front-proxy-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
 

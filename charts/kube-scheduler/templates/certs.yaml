@@ -1,58 +1,55 @@
-
-{{- $baseName           := include "kube-controller-manager.name" . -}}
-{{- $selectorLabels     := include "kube-controller-manager.selectorLabels" . -}}
-{{- $commonLabels       := include "kube-controller-manager.labels" . -}}
+{{- $baseName           := include "kube-scheduler.name" . -}}
+{{- $selectorLabels     := include "kube-scheduler.selectorLabels" . -}}
+{{- $commonLabels       := include "kube-scheduler.labels" . -}}
 {{- $currentNamespace   := .Release.Namespace -}}
 
 {{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
 {{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
 
-{{- with .Values.applications.kubeControllerManager.Certificates }}
+{{- with .Values.applications.kubeScheduler.Certificates }}
 
-{{- with .client }}
+  {{- with .client }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-client"
+  name: "pki-{{- $baseName }}-client"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "system:{{ $baseName }}"
-  secretName: "pki-{{ $baseName }}-client"
+  commonName: "{{ .commonName }}"
+  secretName: "pki-{{- $baseName }}-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
+  {{- with .subject }}
   subject:
     organizations:
-      - "system:{{ $baseName }}"
-    {{- with .subject.organizations }}
+    {{- with .organizations }}
       {{- toYaml . | nindent 6 }}
     {{- end }}
-
+  {{- end }}
   {{- with .usages }}
   usages:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  
   issuerRef:
     name: "issuer"
     kind: Issuer
-{{- end }}
+  {{- end }}
 
-{{- with .server }}
+  {{- with .server }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-{{ $baseName }}-server"
+  name: "pki-{{- $baseName }}-server"
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
@@ -64,7 +61,7 @@ metadata:
   {{- end }}
 spec:
   commonName: "{{ $baseName }}-server"
-  secretName: "pki-{{ $baseName }}-server"
+  secretName: "pki-{{- $baseName }}-server"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
   subject:
@@ -80,9 +77,9 @@ spec:
   {{- end }}
 
   dnsNames:
-    - "{{ $baseName }}"
-    - "{{ $baseName }}.{{- $currentNamespace }}"
-    - "{{ $baseName }}.{{- $currentNamespace }}.svc"
+    - "{{ $baseName }}-svc"
+    - "{{ $baseName }}-svc.{{- $currentNamespace }}"
+    - "{{ $baseName }}-svc.{{- $currentNamespace }}.svc"
   {{- with .dnsNames }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -91,12 +88,11 @@ spec:
   {{- with .ipAddresses }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- range $serviceApiServerIP }}
-    - "{{ .ip }}"
-  {{- end }}
-
+    {{- range $serviceApiServerIP }}
+    - {{ .ip }}
+    {{- end }}
   issuerRef:
     name: "issuer"
     kind: Issuer
-{{- end }}
+  {{- end }}
 {{- end }}

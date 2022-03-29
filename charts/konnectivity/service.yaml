@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: main
+  labels:
+    app.kubernetes.io/instance: konnectivity
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: konnectivity
+  name: konnectivity-server-svc
+spec:
+  ports:
+  - name: client
+    port: 6443
+  selector:
+    app.kubernetes.io/instance: konnectivity
+    app.kubernetes.io/name: konnectivity
+  type: LoadBalancer

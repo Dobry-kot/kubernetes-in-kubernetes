@@ -1,36 +1,32 @@
+{{- $baseName         := include "kube-controller-manager.name" . -}}
+{{- $selectorLabels   := include "kube-controller-manager.selectorLabels" . -}}
+{{- $commonLabels     := include "kube-controller-manager.labels" . -}}
 
-{{- $baseName         := include "konnectivity.name" . -}}
-{{- $selectorLabels   := include "konnectivity.selectorLabels" . -}}
-{{- $commonLabels     := include "konnectivity.labels" . -}}
-{{- with .Values.applications.konnectivityServer.Deployment }}
+{{- with .Values.applications.kubeControllerManager.Deployment }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $baseName }}-server-svc
-
   labels:
     {{- $commonLabels | nindent 4 }}
   {{- with .metadata.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 spec:
-  type: LoadBalancer
-
-  {{- with .containers.konnectivityServer.ports }}
+  type: ClusterIP
+  loadBalancerIP:
+  {{- with .containers.kubeControllerManager.ports }}
   ports:
     {{- range $service := . }}
     - name: {{ $service.name }}
       port: {{ $service.containerPort }}
     {{- end }}
   {{- end }}
-
   selector:
     {{ $selectorLabels | nindent 4 }}
 {{- end }}

@@ -1,7 +1,7 @@
 ---
 applications:
 
-  kubeControllerManager:
+  kubeScheduler:
 
     Deployment:
       replicas: 3
@@ -30,63 +30,36 @@ applications:
       automountServiceAccountToken: false
 
       containers:
-        kubeControllerManager:
-          image: "k8s.gcr.io/kube-controller-manager:v1.21.3"
+        kubeScheduler:
+          image: "k8s.gcr.io/kube-scheduler:v1.21.3"
           imagePullPolicy: IfNotPresent
           entryPoint:
             command:
-              - "kube-controller-manager"
+              - "kube-scheduler"
             args:
               - --bind-address=0.0.0.0
-              - --client-ca-file=/pki/ca/tls.crt
-              - --cluster-name=kubernetes
-              - --cluster-signing-cert-file=/pki/ca/tls.crt
-              - --cluster-signing-key-file=/pki/ca/tls.key
-              - --requestheader-client-ca-file=/pki/pki-kube-apiserver-front-proxy-client/ca.crt
-              - --controllers=*,bootstrapsigner,tokencleaner
-              - --root-ca-file=/pki/ca/tls.crt
-              - --secure-port=10257
-              - --service-account-private-key-file=/pki/sa/tls.key
-              - --use-service-account-credentials=true
-              - --node-monitor-period=2s
-              - --node-monitor-grace-period=16s
-              - --pod-eviction-timeout=30s
               - --leader-elect=true
+              - --secure-port=10259
           livenessProbe:
             failureThreshold: 8
             httpGet:
               path: /healthz
-              port: client
+              port: 10259
               scheme: HTTPS
             initialDelaySeconds: 15
             timeoutSeconds: 15
           ports:
-            - containerPort: 10257
+            - containerPort: 10259
               name: client
           volumeMounts:
             - mountPath: /etc/kubernetes/
               name: kubeconfig
               readOnly: true
-            - mountPath: /pki/ca
-              name: pki-ca
-            - mountPath: /pki/pki-kube-apiserver-front-proxy-client
-              name: pki-kube-apiserver-front-proxy-client
-            - mountPath: /pki/sa
-              name: pki-sa
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
-      volumes:
-        - secret:
-            secretName: "pki-ca"
-          name: pki-ca
-        - secret:
-            secretName: "pki-kube-apiserver-front-proxy-client"
-          name: pki-kube-apiserver-front-proxy-client
-        - secret:
-            secretName: "pki-sa"
-          name: pki-sa
+      volumes: []
 
       strategy:
         type: RollingUpdate
@@ -99,13 +72,13 @@ applications:
         metadata:
           labels: {}
           annotations: {}
-        commonName: "system:kube-controller-manager"
+        commonName: "system:kube-scheduler"
         duration: 8760
         renewBefore: 4380
         measurement: h
         subject:
           organizations:
-            - "system:kube-controller-manager"
+            - "system:kube-scheduler"
         usages:
           - "signing"
           - "key encipherment"

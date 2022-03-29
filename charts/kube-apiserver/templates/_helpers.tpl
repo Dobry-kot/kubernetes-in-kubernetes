@@ -47,7 +47,6 @@ Selector labels
 */}}
 {{- define "kube-apiserver.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "kube-apiserver.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*

@@ -21,4 +21,4 @@
 .idea/
 *.tmproj
 .vscode/
-templates/service.yaml
+templates/service.yaml.tmpl

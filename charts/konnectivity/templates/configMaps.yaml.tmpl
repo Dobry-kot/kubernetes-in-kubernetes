@@ -25,7 +25,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /pki/{{ $baseName }}-server-client/ca.crt
-        server: https://kubernetes-apiserver:6443
+        server: https://kube-apiserver-svc:6443
       name: default-cluster
     contexts:
     - context:
