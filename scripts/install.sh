@@ -7,5 +7,6 @@ helm upgrade main charts/main/ --install --namespace=$CLUSTER_NAME --wait --time
 # helm upgrade kube-apiserver charts/kube-apiserver/  --namespace=$CLUSTER_NAME && \
 # helm upgrade kube-controller-manager charts/kube-controller-manager/  --namespace=$CLUSTER_NAME  && \
 # helm upgrade kube-scheduler charts/kube-scheduler/  --namespace=$CLUSTER_NAME
-helm upgrade terra-kube . --install --namespace=$CLUSTER_NAME
---set kube-apiserver.applications.kubeApiserver.extraParams.serviceCIDR="30.64.0.0/16"
+helm upgrade terra-kube . --install  \
+--set kube-apiserver.applications.kubeApiserver.extraParams.serviceCIDR="30.64.0.0/16" \
+--set kube-apiserver.applications.kubeApiserver.extraParams.oidc.enable="false"

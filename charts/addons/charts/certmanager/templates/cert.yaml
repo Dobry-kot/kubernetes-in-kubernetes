@@ -1,0 +1,49 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-cert-manager-admin-client"
+spec:
+  commonName: "cert-manager-client"
+  secretName: "pki-cert-manager-admin-client"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "cluster-2"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-cert-manager-webhook"
+spec:
+  commonName: "cert-manager-webhook"
+  secretName: "pki-cert-manager-webhook"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "cluster-2"
+
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "server auth"
+
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+
+  dnsNames:
+    - cert-manager-webhook
+    - cert-manager-webhook.cluster-2
+    - cert-manager-webhook.cluster-2.svc
+    - localhost

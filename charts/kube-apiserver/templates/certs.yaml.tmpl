@@ -7,9 +7,8 @@
 {{- $serviceKonnectivityServerLb  := (lookup "v1" "Service" $currentNamespace "konnectivity-server-svc") }}
 {{- $serviceKonnectivityServerIP  := $serviceKonnectivityServerLb.status.loadBalancer.ingress }}
 
-{{- $serviceApiServerLb           := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
-
-{{- $serviceApiServerIP           := $serviceApiServerLb.status.loadBalancer.ingress }}
+{{- $serviceApiServerProxyLb           := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
+{{- $serviceApiServerProxyIP           := $serviceApiServerProxyLb.status.loadBalancer.ingress }}
 
 {{- with .Values.applications.kubeApiserver.Certificates }}
 {{- with .ca}}
@@ -166,7 +165,7 @@ spec:
   {{- range $serviceKonnectivityServerIP }}
     - "{{ .ip }}"
   {{- end }}
-  {{- range $serviceApiServerIP }}
+  {{- range $serviceApiServerProxyIP }}
     - "{{ .ip }}"
   {{- end }}
   {{- with .ipAddresses }}

@@ -26,7 +26,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "pki-{{- $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}"
-
   {{- with .metadata.labels }}
   labels:
     app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
@@ -34,12 +33,10 @@ metadata:
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 spec:
   {{- $newDelta       := mul .deltaRenewBeforeByInstance $instanceNumber }}
   {{- $newRenewBefore := sub .renewBefore $newDelta }}
@@ -47,22 +44,16 @@ spec:
   secretName: "pki-{{- $baseName }}-{{- $instanceContext }}-peer-{{- $instanceNumber }}"
   duration: {{ .duration }}{{ .measurement }}
   renewBefore: {{ $newRenewBefore }}{{ .measurement }}
-
-
   subject:
     organizations:
       - "{{- $currentNamespace }}"
       {{- range $organization := .subject.organizations }}
       - {{ $organization }}
       {{- end }}
-
-
   {{- with .usages }}
   usages:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
-  {{- with .dnsNames }}
   dnsNames:
     - "{{ $baseName }}-{{- $instanceContext }}" 
     - "{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
@@ -73,14 +64,13 @@ spec:
     - "*.{{ $baseName }}-{{- $instanceContext }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}"
     - "*.{{ $baseName }}-{{- $instanceContext }}.{{- $currentNamespace }}.svc"
+  {{- with .dnsNames }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .ipAddresses }}
   ipAddresses:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   issuerRef:
     name: "{{- $baseName }}-issuer"
     kind: Issuer
@@ -92,7 +82,6 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "pki-{{- $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}"
-
   {{- with .metadata.labels }}
   labels:
     app.kubernetes.io/instance: "{{$baseName}}-{{- $instanceNumber }}"
@@ -100,12 +89,10 @@ metadata:
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 spec:
   {{- $newDelta       := mul .deltaRenewBeforeByInstance $instanceNumber }}
   {{- $newRenewBefore := sub .renewBefore $newDelta }}
@@ -113,15 +100,12 @@ spec:
   secretName: "pki-{{- $baseName }}-{{- $instanceContext }}-server-{{- $instanceNumber }}"
   duration: {{ .duration }}{{ .measurement }}
   renewBefore: {{ $newRenewBefore }}{{ .measurement }}
-
-  {{- with .subject }}
   subject:
     organizations:
       - "{{- $currentNamespace }}"
-      {{- range $organization := .organizations }}
-      - {{ $organization }}
-      {{- end }}
-  {{- end }}
+    {{- with .subject.organizations }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
 
   {{- with .usages }}
   usages:
@@ -171,32 +155,26 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "pki-{{- $baseName }}-ca"
-
   {{- with .metadata.labels }}
   labels:
     {{- $commonLabels | nindent 4 }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
   {{- with .metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 spec:
   commonName: "{{- $baseName }}-ca"
   secretName: "pki-{{- $baseName }}-ca"
   duration: {{ .duration }}{{ .measurement }}
   renewBefore: {{ .renewBefore }}{{ .measurement }}
-
-  {{- with .subject }}
   subject:
     organizations:
       - "{{- $currentNamespace }}"
-      {{- range $organization := .organizations }}
-      - {{ $organization }}
-      {{- end }}
-  {{- end }}
+    {{- with .subject.organizations }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
 
   {{- with .usages }}
   usages:

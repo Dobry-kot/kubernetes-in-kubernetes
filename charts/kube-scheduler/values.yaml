@@ -59,7 +59,10 @@ applications:
             requests:
               cpu: 100m
               memory: 128Mi
-      volumes: []
+      volumes:
+        - configMap:
+            name: "kubeconfig"
+          name: kubeconfig
 
       strategy:
         type: RollingUpdate

@@ -1,0 +1,72 @@
+# Copyright 2022 The cert-manager Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# Source: cert-manager/templates/cainjector-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-cainjector
+  labels:
+    app: cainjector
+    app.kubernetes.io/name: cainjector
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "cainjector"
+    app.kubernetes.io/version: "v1.7.2"
+  annotations:
+    cert-manager.io/inject-ca-from-secret: "cert-manager/cert-manager-webhook-ca"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cainjector
+      app.kubernetes.io/instance: cert-manager
+      app.kubernetes.io/component: "cainjector"
+  template:
+    metadata:
+      labels:
+        app: cainjector
+        app.kubernetes.io/name: cainjector
+        app.kubernetes.io/instance: cert-manager
+        app.kubernetes.io/component: "cainjector"
+        app.kubernetes.io/version: "v1.7.2"
+    spec:
+      serviceAccountName: cert-manager-cainjector
+      securityContext:
+        runAsNonRoot: true
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: kubeconfig
+          name: kubeconfig
+        - name: pki-kubeconfig-client
+          secret:
+            defaultMode: 420
+            secretName: pki-cert-manager-admin-client
+      containers:
+        - name: cert-manager
+          image: "quay.io/jetstack/cert-manager-cainjector:v1.7.2"
+          imagePullPolicy: IfNotPresent
+          args:
+          - --kubeconfig=/etc/kubernetes/admin.conf
+          - --v=2
+          - --leader-election-namespace=terra-system
+          - --leader-election-lease-duration=60s
+          - --leader-election-renew-deadline=40s
+          - --leader-election-retry-period=15s
+          volumeMounts:
+            - mountPath: /etc/kubernetes/
+              name: kubeconfig
+              readOnly: true
+            - mountPath: /pki/kubeconfig
+              name: pki-kubeconfig-client

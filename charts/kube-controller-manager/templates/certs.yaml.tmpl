@@ -4,9 +4,6 @@
 {{- $commonLabels       := include "kube-controller-manager.labels" . -}}
 {{- $currentNamespace   := .Release.Namespace -}}
 
-{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
-{{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
-
 {{- with .Values.applications.kubeControllerManager.Certificates }}
 
 {{- with .client }}
@@ -91,9 +88,6 @@ spec:
   ipAddresses:
   {{- with .ipAddresses }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- range $serviceApiServerIP }}
-    - "{{ .ip }}"
   {{- end }}
 
   issuerRef:

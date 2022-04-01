@@ -2,64 +2,11 @@
 {{- $commonLabels     := include "konnectivity.labels" . -}}
 {{- $currentNamespace := .Release.Namespace -}}
 
+{{- $serviceKonnectivityServerLb  := (lookup "v1" "Service" $currentNamespace "konnectivity-server-svc") }}
+{{- $serviceKonnectivityServerIP  := $serviceKonnectivityServerLb.status.loadBalancer.ingress }}
+
+
 {{- with .Values.applications.konnectivityServer.Certificates }}
-{{- with .ca }}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: "pki-{{- $baseName }}-ca"
-  labels:
-    {{- $commonLabels | nindent 4 }}
-  {{- with .metadata.labels }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-
-  {{- with .metadata.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  commonName: "{{ $baseName }}-ca"
-  secretName: "pki-{{- $baseName }}-ca"
-  duration: "{{ .duration }}{{- .measurement }}"
-  renewBefore: "{{ .renewBefore }}{{- .measurement }}"
-  subject:
-    organizations:
-      - "{{- $currentNamespace }}"
-    {{- range $organization := .subject.organizations }}
-      - "{{ $organization }}"
-    {{- end }}
-
-  {{- with .usages }}
-  usages:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-
-  isCA: {{ .isCA }}
-  issuerRef:
-    name: "{{ .issuerRefName }}"
-    kind: Issuer
-
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: "{{ $baseName }}-issuer"
-  labels:
-    {{- $commonLabels | nindent 4 }}
-  {{- with .metadata.labels }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-
-  {{- with .metadata.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  ca:
-    secretName: "pki-{{- $baseName }}-ca"
-{{- end }}
 
 {{- with .server }}
 ---
@@ -103,15 +50,19 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 
-  {{- with .ipAddresses }}
   ipAddresses:
+  {{- range $serviceKonnectivityServerIP }}
+    - "{{ .ip }}"
+  {{- end }}
+  {{- with .ipAddresses }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 
   issuerRef:
-    name: "{{- $baseName }}-issuer"
+    name: "issuer"
     kind: Issuer
 {{- end }}
+
 {{- with .client }}
 ---
 apiVersion: cert-manager.io/v1
@@ -129,7 +80,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "{{ $baseName }}-client"
+  commonName: "system:{{ $baseName }}-client"
   secretName: "pki-{{- $baseName }}-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"
@@ -146,9 +97,10 @@ spec:
   {{- end }}
 
   issuerRef:
-    name: "{{- $baseName }}-issuer"
+    name: "issuer"
     kind: Issuer
 {{- end }}
+
 {{- with .serverClient }}
 ---
 apiVersion: cert-manager.io/v1

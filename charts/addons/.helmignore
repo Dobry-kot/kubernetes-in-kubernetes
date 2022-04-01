@@ -21,9 +21,3 @@
 .idea/
 *.tmproj
 .vscode/
-charts/main
-charts/kube-apiserver/templates/service.yaml
-charts/kube-controller-manager/templates/service.yaml
-charts/addons/charts/metric-server
-charts/addons/charts/konnectivity-client
-charts/addons/charts/kube-state-metrics

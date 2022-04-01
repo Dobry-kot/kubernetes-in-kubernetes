@@ -4,7 +4,7 @@
 {{- $commonLabels       := include "kube-apiserver.labels" . -}}
 {{- $currentNamespace   := .Release.Namespace -}}
 
-{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
+{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
 {{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
 
 {{- with .Values.applications.kubeApiserver }}

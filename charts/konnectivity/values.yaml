@@ -84,6 +84,9 @@ applications:
         - secret:
             secretName: "pki-kube-apiserver-server"
           name: pki-kube-apiserver-server
+        - configMap:
+            name: "kubeconfig"
+          name: kubeconfig
 
       strategy:
         type: RollingUpdate

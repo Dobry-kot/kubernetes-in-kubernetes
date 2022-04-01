@@ -1,0 +1,31 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-proxy-config
+data:
+  nginx.conf: |
+    upstream kube-apiserver {
+      server kube-apiserver-svc:6443;
+    }
+    # upstream metric-server {
+    #   server metric-server-svc:6443;
+    # }
+    server {
+      listen       6443 ssl;
+      listen       [::]:6443 ssl;
+      ssl_certificate "/pki/server/tls.crt";
+      ssl_certificate_key "/pki/server/tls.key";
+
+      location / {
+        #   location /apis/metrics.k8s.io/ {
+        #     proxy_pass https://metric-server;
+        #     proxy_ssl_certificate     /pki/client/tls.crt;
+        #     proxy_ssl_certificate_key /pki/client/tls.key;
+        # }
+          proxy_pass https://kube-apiserver;
+          proxy_ssl_certificate     /pki/client/tls.crt;
+          proxy_ssl_certificate_key /pki/client/tls.key;
+      }
+
+    }

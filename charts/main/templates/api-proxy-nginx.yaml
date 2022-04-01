@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-apiserver-proxy
+  labels:
+    app: nginx
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 6443
+          name: client
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/
+          name: nginx-proxy-config
+        - mountPath: /pki/client
+          name: pki-kube-apiserver-kubelet-client
+        - mountPath: /pki/server
+          name: pki-kube-apiserver-server
+      volumes:
+        - configMap:
+            # defaultMode: 420
+            name: nginx-proxy-config
+          name: nginx-proxy-config
+        - secret:
+            secretName: "pki-kube-apiserver-kubelet-client"
+          name: pki-kube-apiserver-kubelet-client
+        - secret:
+            secretName: "pki-kube-apiserver-server"
+          name: "pki-kube-apiserver-server"

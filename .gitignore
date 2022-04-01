@@ -14,3 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 kubeconfig
+charts/addons/charts/konnectivity-client
+charts/addons/charts/kube-state-metrics
+charts/addons/charts/metric-server
+charts/addons/charts/certmanager/client/certs.yaml

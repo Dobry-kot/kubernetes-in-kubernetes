@@ -96,7 +96,7 @@ spec:
             - --server-cert=/pki/{{ $baseName }}-server/tls.crt
             - --server-key=/pki/{{ $baseName }}-server/tls.key
             - --agent-service-account={{ $baseName }}-agent
-            - --kubeconfig=/etc/kubernetes/{{ $baseName }}-server.conf
+            - --kubeconfig=/etc/kubernetes/admin.conf
             - --authentication-audience=system:{{ $baseName }}-server
           {{- range .ports  }}
             {{- if eq .name "server" }}
@@ -124,8 +124,8 @@ spec:
           volumeMounts:
             - mountPath: /pki/{{ $baseName }}-server
               name: pki-{{ $baseName }}server
-            - mountPath: /pki/{{ $baseName }}-server-client
-              name: pki-{{ $baseName }}-server-client
+            - mountPath: /pki/kubeconfig
+              name: pki-{{ $baseName }}-client
           {{- with .volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -137,11 +137,8 @@ spec:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}server
         - secret:
-            secretName: "pki-{{ $baseName }}-server-client"
-          name: pki-{{ $baseName }}-server-client
-        - configMap:
-            name: "{{ $baseName }}-server-conf"
-          name: kubeconfig
+            secretName: "pki-{{ $baseName }}-client"
+          name: pki-{{ $baseName }}-client
         {{- with .volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

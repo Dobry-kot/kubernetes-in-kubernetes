@@ -78,9 +78,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
-            - --authentication-kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
-            - --authorization-kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
-            - --kubeconfig=/etc/kubernetes/{{- $baseName }}.conf
+            - --authentication-kubeconfig=/etc/kubernetes/admin.conf
+            - --authorization-kubeconfig=/etc/kubernetes/admin.conf
+            - --kubeconfig=/etc/kubernetes/admin.conf
             - --tls-cert-file=/pki/{{ $baseName }}-server/tls.crt
             - --tls-private-key-file=/pki/{{ $baseName }}-server/tls.key
           {{- with .entryPoint.args }}
@@ -110,16 +110,13 @@ spec:
           volumeMounts:
             - mountPath: /pki/{{ $baseName }}-server
               name: pki-{{ $baseName }}
-            - mountPath: /pki/{{ $baseName }}-client
+            - mountPath: /pki/kubeconfig
               name: pki-{{ $baseName }}-client
           {{- with .volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
       {{- end }}
       volumes:
-        - configMap:
-            name: "{{ $baseName }}-conf"
-          name: kubeconfig
         - secret:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}
