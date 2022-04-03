@@ -1,0 +1,75 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    k8s-app: konnectivity-agent
+
+  namespace: kube-system
+  name: konnectivity-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: konnectivity-agent
+  template:
+    metadata:
+      labels:
+        k8s-app: konnectivity-agent
+    spec:
+
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+     
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    k8s-app: konnectivity-agent
+
+      containers:
+      - name: konnectivity-agent
+        image:  us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.30
+        imagePullPolicy: IfNotPresent
+        command:
+        - /proxy-agent
+        - --logtostderr=true
+        - --ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
+        - --proxy-server-host=51.250.46.205
+        - --proxy-server-port=8131
+        - --admin-server-port=8133
+        - --health-server-port=8134
+        ports:
+        - containerPort: 8092
+          name: admin
+        - containerPort: 8093
+          name: health
+        volumeMounts:
+        - mountPath: /var/run/secrets/tokens
+          name: konnectivity-agent-token
+
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: health
+            scheme: HTTP
+          initialDelaySeconds: 15
+          timeoutSeconds: 15
+
+      serviceAccountName: konnectivity-agent
+      volumes:
+      - name: konnectivity-agent-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: konnectivity-agent-token
+              audience: system:konnectivity-server

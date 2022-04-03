@@ -8,13 +8,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 8090
-    name: server
-  - port: 8091
-    name: agent
-  - port: 8092
-    name: admin
-  - port: 8093
-    name: health
+  - port: 8131
+    name: agentport
   selector:
     app.kubernetes.io/name: konnectivity

@@ -36,7 +36,7 @@ applications:
 
       containers:
         kubeApiserver:
-          image: "k8s.gcr.io/kube-apiserver:v1.21.3"
+          image: "k8s.gcr.io/kube-apiserver:v1.23.5"
           imagePullPolicy: IfNotPresent
           entryPoint:
             command:
@@ -96,12 +96,12 @@ applications:
         - configMap:
             name: "apiserver-config"
           name: apiserver-config
+        - configMap:
+            name: "kubeconfig"
+          name: kubeconfig
         - secret:
             secretName: "pki-sa"
           name: pki-sa
-        - secret:
-            secretName: "pki-konnectivity-client"
-          name: pki-konnectivity-client
         - secret:
             secretName: "pki-kube-apiserver-front-proxy-client"
           name: pki-kube-apiserver-front-proxy-client

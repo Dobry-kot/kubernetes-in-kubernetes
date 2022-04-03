@@ -52,7 +52,7 @@ spec:
         - name: pki-kubeconfig-client
           secret:
             defaultMode: 420
-            secretName: pki-cert-manager-admin-client
+            secretName: pki-cert-manager-client
       containers:
         - name: cert-manager
           image: "quay.io/jetstack/cert-manager-cainjector:v1.7.2"

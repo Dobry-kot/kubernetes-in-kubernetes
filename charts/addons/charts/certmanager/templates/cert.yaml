@@ -2,10 +2,10 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-cert-manager-admin-client"
+  name: "pki-cert-manager-client"
 spec:
   commonName: "cert-manager-client"
-  secretName: "pki-cert-manager-admin-client"
+  secretName: "pki-cert-manager-client"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:

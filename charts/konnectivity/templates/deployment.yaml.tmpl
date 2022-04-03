@@ -68,74 +68,69 @@ spec:
 
       {{- with .containers.konnectivityServer }}
       containers:
-        - name: {{ $baseName }}-server
-          image: {{ .image }}
-          imagePullPolicy: {{ .imagePullPolicy }}
-
-          {{- with .resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-
-          {{- with .ports }}
+        - command:
+          - /proxy-server
+          - --logtostderr=true
+          - --server-id=$(POD_NAME)
+          - --cluster-cert=/pki/apiserver/tls.crt
+          - --cluster-key=/pki/apiserver/tls.key
+          - --mode=http-connect
+          - --server-ca-cert=/pki/server/ca.crt
+          - --server-cert=/pki/server/tls.crt
+          - --server-key=/pki/server/tls.key
+          - --server-port=8131
+          - --agent-port=8132
+          - --admin-port=8133
+          - --health-port=8134
+          - --agent-namespace=kube-system
+          - --agent-service-account=konnectivity-agent
+          - --kubeconfig=/etc/kubernetes/admin.conf
+          - --authentication-audience=system:konnectivity-server
           ports:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-
-          {{- with .envs }}
-          env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          
-          {{- with .entryPoint.command }}
-          command:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          args:
-            - --server-ca-cert=/pki/{{ $baseName }}-server/ca.crt
-            - --server-cert=/pki/{{ $baseName }}-server/tls.crt
-            - --server-key=/pki/{{ $baseName }}-server/tls.key
-            - --agent-service-account={{ $baseName }}-agent
-            - --kubeconfig=/etc/kubernetes/admin.conf
-            - --authentication-audience=system:{{ $baseName }}-server
-          {{- range .ports  }}
-            {{- if eq .name "server" }}
-            - --server-port={{- .containerPort }}
-            {{- end }}
-            {{- if eq .name "agent" }}
-            - --agent-port={{- .containerPort }}
-            {{- end }}
-            {{- if eq .name "admin" }}
-            - --admin-port={{- .containerPort }}
-            {{- end }}
-            {{- if eq .name "health" }}
-            - --health-port={{- .containerPort }}
-            {{- end }}
-          {{- end }}
-          {{- with .entryPoint.args }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-
-          {{- with .livenessProbe }}
+            - containerPort: 8132
+              name: agentport
+            - containerPort: 8133
+              name: adminport
+            - containerPort: 8133
+              name: healthport
+          image: "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-server:v0.0.30"
+          imagePullPolicy: IfNotPresent
           livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-
+            failureThreshold: 8
+            httpGet:
+              path: /healthz
+              port: healthport
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 60
+          name: konnectivity-server
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           volumeMounts:
-            - mountPath: /pki/{{ $baseName }}-server
-              name: pki-{{ $baseName }}server
-            - mountPath: /pki/kubeconfig
-              name: pki-{{ $baseName }}-client
-          {{- with .volumeMounts }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+          - mountPath: /pki/apiserver
+            name: pki-kube-apiserver-server
+          - mountPath: /pki/kubeconfig
+            name: pki-konnectivity-client
+          - mountPath: /pki/server
+            name: pki-konnectivity-server
+          - mountPath: /etc/kubernetes
+            name: kubeconfig
+            readOnly: true
+
 
       {{- end }}
 
       volumes:
         - secret:
             secretName: "pki-{{ $baseName }}-server"
-          name: pki-{{ $baseName }}server
+          name: pki-{{ $baseName }}-server
         - secret:
             secretName: "pki-{{ $baseName }}-client"
           name: pki-{{ $baseName }}-client

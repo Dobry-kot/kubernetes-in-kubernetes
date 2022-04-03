@@ -118,7 +118,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  commonName: "system:{{- $baseName }}-server"
+  commonName: "system:konnectivity-server"
   secretName: "pki-{{- $baseName }}-server-client"
   duration: "{{ .duration }}{{- .measurement }}"
   renewBefore: "{{ .renewBefore }}{{- .measurement }}"

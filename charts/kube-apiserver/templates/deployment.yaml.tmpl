@@ -145,11 +145,22 @@ spec:
               name: pki-{{ $baseName }}-etcd-client
             - mountPath: /pki/pki-{{ $baseName }}-kubelet-client
               name: pki-{{ $baseName }}-kubelet-client
+            - mountPath: /etc/kubernetes/konnectivity-client
+              name: pki-konnectivity-client
           {{- with .volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
+    
       {{- end }}
       volumes:
+        - emptyDir: {}
+          name: konnectivity-uds
+        - secret:
+            secretName: "pki-konnectivity-server"
+          name: pki-konnectivity-server
+        - secret:
+            secretName: "pki-konnectivity-client"
+          name: pki-konnectivity-client
         - secret:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}-server

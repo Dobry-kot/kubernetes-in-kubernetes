@@ -54,7 +54,7 @@ spec:
         - name: pki-kubeconfig-client
           secret:
             defaultMode: 420
-            secretName: pki-cert-manager-admin-client
+            secretName: pki-cert-manager-client
         - secret:
             secretName: "pki-kube-apiserver-server"
           name: pki-kube-apiserver-server

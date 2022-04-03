@@ -1,0 +1,81 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-server
+  labels:
+    app: metric-server
+spec:
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: metric-server
+  template:
+    metadata:
+      labels:
+        app: metric-server
+    spec:
+
+
+      volumes:
+      # mount in tmp so we can safely use from-scratch images and/or read-only containers
+        - secret:
+            secretName: "pki-metrics-server"
+          name: pki-metrics-server
+        - configMap:
+            defaultMode: 420
+            name: kubeconfig
+          name: kubeconfig
+      priorityClassName: system-cluster-critical
+      containers:
+      - name: metrics-server
+        image: gcr.io/k8s-staging-metrics-server/metrics-server:master
+        imagePullPolicy: IfNotPresent
+        args:
+          - --kubeconfig=/etc/kubernetes/admin.conf
+          - --authentication-kubeconfig=/etc/kubernetes/admin.conf
+          - --tls-cert-file=/pki/kubeconfig/tls.crt
+          - --tls-private-key-file=/pki/kubeconfig/tls.key
+          - --client-ca-file=/pki/kubeconfig/ca.crt
+          - --secure-port=4443
+          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+          - --kubelet-use-node-status-port
+          - --metric-resolution=15s
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+          - mountPath: /etc/kubernetes/
+            name: kubeconfig
+            readOnly: true
+          - mountPath: /pki/kubeconfig
+            name: pki-metrics-server
+        ports:
+        - name: https
+          containerPort: 4443
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: https
+            scheme: HTTPS
+          periodSeconds: 10
+          failureThreshold: 3
+          initialDelaySeconds: 20
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: https
+            scheme: HTTPS
+          periodSeconds: 10
+          failureThreshold: 3
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+      nodeSelector:
+        kubernetes.io/os: linux

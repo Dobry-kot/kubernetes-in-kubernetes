@@ -45,6 +45,9 @@ applications:
               - --log-file=/var/log/konnectivity-server.log
               - --log-file-max-size=0
               # - --uds-name=/etc/srv/kubernetes/konnectivity-server/konnectivity-server.socket
+              - --agent-service-account=konnectivity-agent
+              - --kubeconfig=/etc/kubernetes/admin.conf
+              - --authentication-audience=system:konnectivity-server
               - --keepalive-time=1h
 
           envs: 
@@ -87,6 +90,7 @@ applications:
         - configMap:
             name: "kubeconfig"
           name: kubeconfig
+
 
       strategy:
         type: RollingUpdate

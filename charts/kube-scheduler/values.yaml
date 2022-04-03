@@ -31,7 +31,7 @@ applications:
 
       containers:
         kubeScheduler:
-          image: "k8s.gcr.io/kube-scheduler:v1.21.3"
+          image: "k8s.gcr.io/kube-scheduler:v1.23.5"
           imagePullPolicy: IfNotPresent
           entryPoint:
             command:

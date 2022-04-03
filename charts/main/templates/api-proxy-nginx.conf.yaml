@@ -4,13 +4,18 @@ apiVersion: v1
 metadata:
   name: nginx-proxy-config
 data:
-  nginx.conf: |
+  kube-apiserver.conf: |
+    access_log /etc/nginx/nginx-access.log ;
+    error_log /etc/nginx/nginx-error.log ;
+
     upstream kube-apiserver {
       server kube-apiserver-svc:6443;
     }
-    # upstream metric-server {
-    #   server metric-server-svc:6443;
-    # }
+
+    upstream metric-server {
+      server kube-state-metrics:8081;
+    }
+
     server {
       listen       6443 ssl;
       listen       [::]:6443 ssl;
@@ -18,14 +23,26 @@ data:
       ssl_certificate_key "/pki/server/tls.key";
 
       location / {
-        #   location /apis/metrics.k8s.io/ {
-        #     proxy_pass https://metric-server;
-        #     proxy_ssl_certificate     /pki/client/tls.crt;
-        #     proxy_ssl_certificate_key /pki/client/tls.key;
-        # }
-          proxy_pass https://kube-apiserver;
-          proxy_ssl_certificate     /pki/client/tls.crt;
-          proxy_ssl_certificate_key /pki/client/tls.key;
-      }
+          location /apis {
+            proxy_pass https://kube-apiserver;
+            proxy_ssl_certificate     /pki/client/tls.crt;
+            proxy_ssl_certificate_key /pki/client/tls.key;
+            proxy_send_timeout 150;
+            proxy_read_timeout 150;
+  
+          }
+          location /apis/metrics.k8s.io/v1beta1 {
+              proxy_pass https://metric-server/metrics;
+              proxy_send_timeout 150;
+              proxy_read_timeout 150;
 
+          }
+        proxy_pass https://kube-apiserver;
+        proxy_ssl_certificate     /pki/client/tls.crt;
+        proxy_ssl_certificate_key /pki/client/tls.key;
+      }
     }
+
+
+
+

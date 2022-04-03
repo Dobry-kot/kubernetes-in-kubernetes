@@ -1,0 +1,20 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-system-node-fhmqvnuf5fhkgdn2fjol"
+spec:
+  commonName: "system:node:fhmqvnuf5fhkgdn2fjol"
+  secretName: "pki-system-node-fhmqvnuf5fhkgdn2fjol"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "cluster-2"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
