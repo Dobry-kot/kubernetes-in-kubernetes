@@ -2,9 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.4.2
   name: kube-state-metrics
 spec:
   replicas: 1
@@ -14,9 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: exporter
         app.kubernetes.io/name: kube-state-metrics
-        app.kubernetes.io/version: 2.4.2
     spec:
       automountServiceAccountToken: true
       volumes:
@@ -25,6 +21,10 @@ spec:
             name: kubeconfig
           name: kubeconfig
         - name: pki-kubeconfig-client
+          secret:
+            defaultMode: 420
+            secretName: pki-kube-state-metrics-client
+        - name: pki-kubeconfig-server
           secret:
             defaultMode: 420
             secretName: pki-kube-state-metrics
@@ -38,6 +38,8 @@ spec:
             readOnly: true
           - mountPath: /pki/kubeconfig
             name: pki-kubeconfig-client
+          - mountPath: /pki/server
+            name: pki-kubeconfig-server
         livenessProbe:
           httpGet:
             path: /healthz

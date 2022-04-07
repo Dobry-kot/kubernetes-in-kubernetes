@@ -2,20 +2,43 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-kube-state-metrics-client"
+  name: "pki-kube-state-metrics-server"
 spec:
   commonName: "system:kube-state-metrics"
-  secretName: "pki-kube-state-metrics"
+  secretName: "pki-kube-state-metrics-server"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+      - "kubernetes"
   usages:
-  - "signing"
-  - "key encipherment"
-  - "client auth"
-  - "server auth"
+    - "signing"
+    - "key encipherment"
+    - "server auth"
+  dnsNames:
+    - "localhost"
+    - "kube-state-metrics"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-kube-state-metrics-client"
+spec:
+  commonName: "system:kube-state-metrics"
+  secretName: "pki-kube-state-metrics-client"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+      - "kubernetes"
+  usages:
+    - "signing"
+    - "key encipherment"
+    - "client auth"
   issuerRef:
     name: "issuer"
     kind: Issuer

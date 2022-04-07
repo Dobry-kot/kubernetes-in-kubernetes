@@ -44,14 +44,14 @@ spec:
         - --logtostderr=true
         - --ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
-        - --proxy-server-host=51.250.46.205
-        - --proxy-server-port=8131
+        - --proxy-server-host=51.250.41.128
+        - --proxy-server-port=8132
         - --admin-server-port=8133
         - --health-server-port=8134
         ports:
-        - containerPort: 8092
+        - containerPort: 8133
           name: admin
-        - containerPort: 8093
+        - containerPort: 8134
           name: health
         volumeMounts:
         - mountPath: /var/run/secrets/tokens

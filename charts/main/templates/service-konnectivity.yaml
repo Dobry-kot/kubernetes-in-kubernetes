@@ -2,13 +2,35 @@
 apiVersion: v1
 kind: Service
 metadata:
+  name: kube-apiserver-svc
+  labels:
+    app.kubernetes.io/name: kube-apiserver
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8132
+    name: agentport
+  - port: 6443
+    name: client
+  selector:
+    app.kubernetes.io/name: kube-apiserver
+
+{{- if .Values.applications.konnectivityServer.enable }}
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: konnectivity-server-svc
   labels:
     app.kubernetes.io/name: konnectivity
 spec:
   type: LoadBalancer
   ports:
-  - port: 8131
+  - port: 8132
     name: agentport
+  - port: 8131
+    name: serverport
   selector:
     app.kubernetes.io/name: konnectivity
+  sessionAffinity: ClientIP
+{{- end }}

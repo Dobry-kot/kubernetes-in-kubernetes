@@ -16,7 +16,7 @@ spec:
       name: custom-metrics-apiserver
     spec:
       serviceAccountName: custom-metrics-apiserver
-      automountServiceAccountToken: false
+      automountServiceAccountToken: true
       containers:
       - name: custom-metrics-apiserver
         image: quay.io/coreos/k8s-prometheus-adapter-amd64@sha256:26e5ba6d0536994add9c101e3ba7ce59e893f5bef8c410472e6ed4204d92f440
@@ -25,11 +25,12 @@ spec:
         - --tls-cert-file=/pki/kubeconfig/tls.crt
         - --tls-private-key-file=/pki/kubeconfig/tls.key
         - --client-ca-file=/pki/kubeconfig/ca.crt
-        - --authentication-skip-lookup=true
+        - --authorization-always-allow-paths=kube-apiserver-svc
         - --authorization-kubeconfig=/etc/kubernetes/admin.conf
         - --authentication-kubeconfig=/etc/kubernetes/admin.conf
+        - --authentication-skip-lookup=false
         - --logtostderr=true
-        - --prometheus-url=http://prometheus.prom.svc:9090/
+        - --prometheus-url=http://vmselect-example-vmcluster-additional-service:8481/select/0/prometheus/
         - --metrics-relist-interval=1m
         - --v=10
         - --config=/etc/adapter/config.yaml

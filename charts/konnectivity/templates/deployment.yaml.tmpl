@@ -4,7 +4,8 @@
 {{- $commonLabels     := include "konnectivity.labels" . -}}
 {{- $currentNamespace := .Release.Namespace -}}
 
-{{- with .Values.applications.konnectivityServer.Deployment }}
+{{- if .Values.applications.konnectivityServer.enable }}
+  {{- with .Values.applications.konnectivityServer.Deployment }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -86,12 +87,13 @@ spec:
           - --agent-service-account=konnectivity-agent
           - --kubeconfig=/etc/kubernetes/admin.conf
           - --authentication-audience=system:konnectivity-server
+          - --keepalive-time=1h
           ports:
             - containerPort: 8132
               name: agentport
             - containerPort: 8133
               name: adminport
-            - containerPort: 8133
+            - containerPort: 8134
               name: healthport
           image: "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-server:v0.0.30"
           imagePullPolicy: IfNotPresent
@@ -124,7 +126,6 @@ spec:
             name: kubeconfig
             readOnly: true
 
-
       {{- end }}
 
       volumes:
@@ -139,3 +140,4 @@ spec:
         {{- end }}
 
 {{- end}}
+{{- end }}

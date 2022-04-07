@@ -1,9 +1,12 @@
 export CLUSTER_VERSION="1.23.5"
+export CONTAINERD="1.6.2"
+export CNI_PLUGIN="1.1.1"
+export RUNC="1.0.0-rc93"
 wget -q --show-progress --https-only --timestamping \
   https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.23.0/crictl-v1.23.0-linux-amd64.tar.gz \
-  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc93/runc.amd64 \
-  https://github.com/containernetworking/plugins/releases/download/v0.9.1/cni-plugins-linux-amd64-v0.9.1.tgz \
-  https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-linux-amd64.tar.gz \
+  https://github.com/opencontainers/runc/releases/download/v${RUNC}/runc.amd64 \
+  https://github.com/containernetworking/plugins/releases/download/v${CNI_PLUGIN}/cni-plugins-linux-amd64-v${CNI_PLUGIN}.tgz \
+  https://github.com/containerd/containerd/releases/download/v${CONTAINERD}/containerd-${CONTAINERD}-linux-amd64.tar.gz \
   https://storage.googleapis.com/kubernetes-release/release/v${CLUSTER_VERSION}/bin/linux/amd64/kube-proxy \
   https://storage.googleapis.com/kubernetes-release/release/v${CLUSTER_VERSION}/bin/linux/amd64/kubectl \
   https://storage.googleapis.com/kubernetes-release/release/v${CLUSTER_VERSION}/bin/linux/amd64/kubelet
@@ -13,15 +16,15 @@ sudo mkdir -p \
   /opt/cni/bin \
   /var/lib/kubelet \
   /var/lib/kubernetes \
-  /var/run/kubernetes
+  /var/run/kubernetes \
+  containerd
 
-mkdir containerd
-tar -xvf crictl-*-linux-amd64.tar.gz
-tar -xvf containerd-1.4.4-linux-amd64.tar.gz -C containerd
-sudo tar -xvf cni-plugins-linux-amd64-v0.9.1.tgz -C /opt/cni/bin/
+tar -xvf crictl-v*-linux-amd64.tar.gz
+tar -xvf containerd-*-linux-amd64.tar.gz -C containerd
+sudo tar -xvf cni-plugins-linux-amd64-v*.tgz -C /opt/cni/bin/
 sudo mv runc.amd64 runc
-chmod +x crictl kubectl kubelet runc 
-sudo mv crictl kubectl kubelet runc /usr/local/bin/
+chmod +x crictl kubectl kube-proxy kubelet runc 
+sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
 sudo mv containerd/bin/* /bin/
 
 cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
@@ -83,12 +86,12 @@ authentication:
   webhook:
     enabled: true
   x509:
-    clientCAFile: "/var/lib/kubernetes/ca.pem"
+    clientCAFile: "/var/lib/kubernetes/ca.crt"
 authorization:
   mode: Webhook
 clusterDomain: "cluster.local"
 clusterDNS:
-  - "10.32.0.10"
+  - "30.64.0.10"
 resolvConf: "/run/systemd/resolve/resolv.conf"
 runtimeRequestTimeout: "15m"
 tlsCertFile: "/var/lib/kubelet/tls.crt"
@@ -123,9 +126,9 @@ cat <<EOF | sudo tee /var/lib/kube-proxy/kube-proxy-config.yaml
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 clientConnection:
-  kubeconfig: "/var/lib/kube-proxy/kubeconfig"
-mode: "iptables"
-clusterCIDR: "10.200.0.0/16"
+  kubeconfig: "/var/lib/kubelet/kubeconfig"
+mode: "ipvs"
+clusterCIDR: "30.64.0.0/16"
 EOF
 
 cat <<EOF | sudo tee /etc/systemd/system/kube-proxy.service
@@ -143,17 +146,17 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-export instance="cl1khoqmlj0kniadg8mg-imej"
+export instance="cl1pnlt1sdb3s9rsaacl-ohyw"
 
-cat <<EOF | kubectl -f <<
+cat <<EOF | sudo tee /tmp/cl1pnlt1sdb3s9rsaacl-ohyw
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-system-node-cl1khoqmlj0kniadg8mg-imej"
+  name: "pki-system-node-cl1pnlt1sdb3s9rsaacl-ohyw"
 spec:
-  commonName: "system:node:cl1khoqmlj0kniadg8mg-imej"
-  secretName: "pki-system-node-cl1khoqmlj0kniadg8mg-imej"
+  commonName: "system:node:cl1pnlt1sdb3s9rsaacl-ohyw"
+  secretName: "pki-system-node-cl1pnlt1sdb3s9rsaacl-ohyw"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
@@ -163,10 +166,11 @@ spec:
     - "signing"
     - "key encipherment"
     - "client auth"
+    - "server auth"
   dnsNames:
-    - cl1khoqmlj0kniadg8mg-imej
+    - cl1pnlt1sdb3s9rsaacl-ohyw
   ipAddresses:
-    - 10.128.0.22
+    - 10.128.0.9
   issuerRef:
     name: "issuer"
     kind: Issuer
@@ -177,7 +181,7 @@ apiVersion: v1
 clusters:
 - cluster:
     certificate-authority: /var/lib/kubernetes/ca.crt
-    server: https://51.250.45.75:6443
+    server: https://51.250.105.203:6443
   name: default-cluster
 contexts:
 - context:

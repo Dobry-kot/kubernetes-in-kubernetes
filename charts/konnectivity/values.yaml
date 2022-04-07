@@ -2,9 +2,11 @@
 applications:
 
   konnectivityServer:
+    enable: true
+    external: true 
 
     Deployment:
-      replicas: 3
+      replicas: 1
 
       metadata:
         labels: {}

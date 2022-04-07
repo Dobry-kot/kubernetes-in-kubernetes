@@ -26,6 +26,8 @@ charts/kube-controller-manager/templates/service.yaml
 charts/addons/charts/metric-server
 charts/addons/charts/konnectivity-client
 charts/addons/charts/kube-state-metrics
-charts/kubeadm
+#charts/kubeadm
 #charts/konnectivity
 charts/addons/charts/prometheus-adapter
+charts/addons/charts/cilium
+charts/addons/charts/victoriaMetrics

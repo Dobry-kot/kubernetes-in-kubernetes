@@ -2,15 +2,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-system-node-fhmqvnuf5fhkgdn2fjol"
+  name: "pki-cilium-operator-server-client"
 spec:
-  commonName: "system:node:fhmqvnuf5fhkgdn2fjol"
-  secretName: "pki-system-node-fhmqvnuf5fhkgdn2fjol"
+  commonName: "system:cilium-operator"
+  secretName: "pki-cilium-operator-client"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+    - "system:masters"
   usages:
   - "signing"
   - "key encipherment"

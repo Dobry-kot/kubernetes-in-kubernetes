@@ -1,14 +1,27 @@
 
-{{- $baseName         := include "kube-apiserver.name" . -}}
-{{- $selectorLabels   := include "kube-apiserver.selectorLabels" . -}}
-{{- $commonLabels     := include "kube-apiserver.labels" . -}}
-{{- $currentNamespace := .Release.Namespace -}}
+{{- $baseName                     := include "kube-apiserver.name" . -}}
+{{- $selectorLabels               := include "kube-apiserver.selectorLabels" . -}}
+{{- $commonLabels                 := include "kube-apiserver.labels" . -}}
+{{- $currentNamespace             := .Release.Namespace -}}
+{{- $serviceKonnectivityIP        := list }}
+{{- $serviceKubeApiProxyServerIP  := list }}
+{{- $serviceApiServerProxyLb      := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
+{{- $serviceApiServerProxyIP      := $serviceApiServerProxyLb.status.loadBalancer.ingress }}
 
-{{- $serviceKonnectivityServerLb  := (lookup "v1" "Service" $currentNamespace "konnectivity-server-svc") }}
-{{- $serviceKonnectivityServerIP  := $serviceKonnectivityServerLb.status.loadBalancer.ingress }}
-
-{{- $serviceApiServerProxyLb           := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
-{{- $serviceApiServerProxyIP           := $serviceApiServerProxyLb.status.loadBalancer.ingress }}
+{{- with $.Values.applications.konnectivityServer }}
+  {{- if .enable }}
+    {{- if .external }}
+      {{- $serviceKonnectivityLb  := (lookup "v1" "Service" $currentNamespace "konnectivity-server-svc") }}
+      {{- $serviceKonnectivityIP  = $serviceKonnectivityLb.status.loadBalancer.ingress }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- with $.Values.applications.proxyServer }}
+  {{- if .enable }}
+    {{- $serviceKubeApiProxyServer    := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
+    {{- $serviceKubeApiProxyServerIP  = $serviceKubeApiProxyServer.status.loadBalancer.ingress }}
+  {{- end }}
+{{- end }}
 
 {{- with .Values.applications.kubeApiserver.Certificates }}
 {{- with .ca}}
@@ -162,8 +175,21 @@ spec:
   {{- end }}
 
   ipAddresses:
-  {{- range $serviceKonnectivityServerIP }}
+  {{- with $.Values.applications.konnectivityServer }}
+    {{- if .enable }}
+      {{- if .external }}
+        {{- range $serviceKonnectivityIP }}
     - "{{ .ip }}"
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- with $.Values.applications.proxyServer }}
+    {{- if .enable }}
+      {{- range $serviceKubeApiProxyServerIP }}
+    - "{{ .ip }}"
+      {{- end }}
+    {{- end }}
   {{- end }}
   {{- range $serviceApiServerProxyIP }}
     - "{{ .ip }}"

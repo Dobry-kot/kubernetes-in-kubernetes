@@ -4,7 +4,7 @@
 {{- $commonLabels       := include "kube-apiserver.labels" . -}}
 {{- $currentNamespace   := .Release.Namespace -}}
 
-{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
+{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
 {{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
 
 {{- with .Values.applications.kubeApiserver }}
@@ -147,10 +147,74 @@ spec:
               name: pki-{{ $baseName }}-kubelet-client
             - mountPath: /etc/kubernetes/konnectivity-client
               name: pki-konnectivity-client
+            - mountPath: /etc/kubernetes/konnectivity-server
+              name: konnectivity-uds
           {{- with .volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-    
+
+        {{- with $.Values.applications.konnectivityServer }}
+          {{- if .enable }}
+            {{- if not .external }}
+        - command:
+          - /proxy-server
+          - --logtostderr=true
+          - --server-id=$(POD_NAME)
+          - --cluster-cert=/pki/apiserver/tls.crt
+          - --cluster-key=/pki/apiserver/tls.key
+          - --mode=grpc
+          - --uds-name=/etc/kubernetes/konnectivity-server/konnectivity-server.socket
+          - --server-port=0
+          - --agent-port=8132
+          - --admin-port=8133
+          - --health-port=8134
+          - --agent-namespace=kube-system
+          - --agent-service-account=konnectivity-agent
+          - --kubeconfig=/etc/kubernetes/admin.conf
+          - --authentication-audience=system:konnectivity-server
+          ports:
+            - containerPort: 8132
+              name: agentport
+            - containerPort: 8133
+              name: adminport
+            - containerPort: 8134
+              name: healthport
+          image: "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-server:v0.0.30"
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /healthz
+              port: healthport
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 60
+          name: konnectivity-server
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          volumeMounts:
+          - mountPath: /pki/apiserver
+            name: pki-kube-apiserver-server
+          - mountPath: /pki/kubeconfig
+            name: pki-konnectivity-client
+          - mountPath: /pki/server
+            name: pki-konnectivity-server
+          - mountPath: /etc/kubernetes
+            name: kubeconfig
+            readOnly: true
+          - mountPath: /etc/kubernetes/konnectivity-server
+            name: konnectivity-uds
+            {{- end }}
+          {{- end }}
+        {{- end }}
+
       {{- end }}
       volumes:
         - emptyDir: {}
@@ -164,6 +228,9 @@ spec:
         - secret:
             secretName: "pki-{{ $baseName }}-server"
           name: pki-{{ $baseName }}-server
+        - secret:
+            secretName: "pki-{{ $baseName }}-kubelet-client"
+          name: pki-{{ $baseName }}-kubelet-client
         - secret:
             secretName: "pki-{{ $baseName }}-etcd-client"
           name: pki-{{ $baseName }}-etcd-client

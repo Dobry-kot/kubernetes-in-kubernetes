@@ -12,8 +12,8 @@ data:
       server kube-apiserver-svc:6443;
     }
 
-    upstream metric-server {
-      server kube-state-metrics:8081;
+    upstream prometheus-adapter {
+      server custom-metrics-apiserver:443;
     }
 
     server {
@@ -32,7 +32,7 @@ data:
   
           }
           location /apis/metrics.k8s.io/v1beta1 {
-              proxy_pass https://metric-server/metrics;
+              proxy_pass https://prometheus-adapter;
               proxy_send_timeout 150;
               proxy_read_timeout 150;
 

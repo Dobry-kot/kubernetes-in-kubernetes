@@ -2,20 +2,19 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-metrics-server"
+  name: "pki-vmagent-client"
 spec:
-  commonName: "system:metrics-server"
-  secretName: "pki-metrics-server"
+  commonName: "system:custom:vmagent-client"
+  secretName: "pki-vmagent-client"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+    - "system:masters"
   usages:
   - "signing"
   - "key encipherment"
   - "client auth"
-  - "server auth"
   issuerRef:
     name: "issuer"
     kind: Issuer

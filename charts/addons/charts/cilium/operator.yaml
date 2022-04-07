@@ -1,0 +1,108 @@
+---
+# Source: cilium/templates/cilium-operator/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cilium-operator
+  labels:
+    io.cilium/app: operator
+    name: cilium-operator
+spec:
+  # See docs on ServerCapabilities.LeasesResourceLock in file pkg/k8s/version/version.go
+  # for more details.
+  replicas: 1
+  selector:
+    matchLabels:
+      io.cilium/app: operator
+      name: cilium-operator
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+      labels:
+        io.cilium/app: operator
+        name: cilium-operator
+    spec:
+      # In HA mode, cilium-operator pods must not be scheduled on the same
+      # node as they will clash with each other.
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: io.cilium/app
+                operator: In
+                values:
+                - operator
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: cilium-operator
+        image: quay.io/cilium/operator-generic:v1.11.3@sha256:5b81db7a32cb7e2d00bb3cf332277ec2b3be239d9e94a8d979915f4e6648c787
+        imagePullPolicy: IfNotPresent
+        command:
+        - cilium-operator-generic
+        args:
+        - --config-dir=/tmp/cilium/config-map
+        - --debug=$(CILIUM_DEBUG)
+        - --k8s-kubeconfig-path=/etc/kubernetes/admin.conf
+        env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: CILIUM_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: CILIUM_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              key: debug
+              name: cilium-config
+              optional: true
+        - name: KUBERNETES_SERVICE_HOST
+          value: "51.250.105.203"
+        - name: KUBERNETES_SERVICE_PORT
+          value: "6443"
+        livenessProbe:
+          httpGet:
+            host: "127.0.0.1"
+            path: /healthz
+            port: 9234
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: cilium-config-path
+          mountPath: /tmp/cilium/config-map
+          readOnly: true
+        - mountPath: /etc/kubernetes/
+          name: kubeconfig
+          readOnly: true
+        - mountPath: /pki/kubeconfig/
+          name: pki-client
+          readOnly: true
+      hostNetwork: true
+      restartPolicy: Always
+      priorityClassName: system-cluster-critical
+      tolerations:
+        - operator: Exists
+      volumes:
+        # To read the configuration from the config map
+      - name: cilium-config-path
+        configMap:
+          name: cilium-config
+      - configMap:
+          defaultMode: 420
+          name: kubeconfig
+        name: kubeconfig
+      - name: pki-client
+        secret:
+          secretName: pki-cilium-operator-client

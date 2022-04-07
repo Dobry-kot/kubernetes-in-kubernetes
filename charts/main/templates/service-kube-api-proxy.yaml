@@ -1,20 +1,14 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
+  name: kube-apiserver-proxy-svc
   labels:
     app: nginx
-  name: kube-apiserver-proxy-svc
 spec:
-  ipFamilies:
-    - IPv4
-  ipFamilyPolicy: SingleStack
-  allocateLoadBalancerNodePorts: false
+  type: LoadBalancer
   ports:
-    - name: client
-      port: 6443
-      protocol: TCP
-      targetPort: client
+  - port: 6443
+    name: client
   selector:
     app: nginx
-  sessionAffinity: None
-  type: LoadBalancer

@@ -2,20 +2,24 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-prometheus-adapter-server-client"
+  name: "pki-metrics-server"
 spec:
-  commonName: "system:prometheus-adapter"
-  secretName: "pki-prometheus-adapter-server-client"
+  commonName: "system:metrics-server"
+  secretName: "pki-metrics-server"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "system:masters"
+    - "cluster-2"
   usages:
   - "signing"
   - "key encipherment"
   - "client auth"
   - "server auth"
+  ipAddresses:
+  dnsNames:
+    - "localhost"
+    - "metric-server-svc"
   issuerRef:
     name: "issuer"
     kind: Issuer
