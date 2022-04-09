@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: select
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: select.cluster-2.ingress.dobry-kot.ru
+    http:
+      paths:
+      - backend:
+          service:
+            name: vmselect-example-vmcluster-additional-service
+            port:
+              number: 8481
+        path: /
+        pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: insert
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: insert.cluster-2.ingress.dobry-kot.ru
+    http:
+      paths:
+      - backend:
+          service:
+            name: vminsert-example-vmcluster
+            port:
+              number: 8480
+        path: /
+        pathType: Prefix
+

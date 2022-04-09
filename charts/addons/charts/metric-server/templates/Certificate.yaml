@@ -10,7 +10,7 @@ spec:
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+    - "kubernetes"
   usages:
   - "signing"
   - "key encipherment"

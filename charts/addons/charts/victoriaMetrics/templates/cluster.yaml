@@ -1,11 +1,9 @@
-cat << EOF | kubectl apply -f -
+---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMCluster
 metadata:
-  name: example-vmcluster
+  name: vmcluster
 spec:
-  # Add fields here
-
   retentionPeriod: "1"
   vmstorage:
     replicaCount: 2
@@ -16,4 +14,3 @@ spec:
     replicaCount: 2
   vminsert:
     replicaCount: 2
-EOF

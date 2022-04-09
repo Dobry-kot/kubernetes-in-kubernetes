@@ -2,4 +2,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: konnectivity-agent
-  namespace: kube-system
+  namespace: terra-system

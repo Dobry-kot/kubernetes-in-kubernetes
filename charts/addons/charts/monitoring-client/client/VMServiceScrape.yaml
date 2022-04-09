@@ -1,0 +1,21 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: vmagent-example-vmagent-test
+  namespace: terra-system
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: https
+    interval: 1s
+    tlsConfig:
+      caFile: /etc/vm/secrets/pki-vmagent-client/ca.crt
+      certFile: /etc/vm/secrets/pki-vmagent-client/tls.crt
+      keyFile: /etc/vm/secrets/pki-vmagent-client/tls.key
+      serverName: my-release-node-exporter
+      # insecureSkipVerify: true
+  jobLabel: node-exporter
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: node-exporter

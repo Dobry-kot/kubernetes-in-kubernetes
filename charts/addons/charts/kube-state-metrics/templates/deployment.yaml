@@ -20,14 +20,14 @@ spec:
             defaultMode: 420
             name: kubeconfig
           name: kubeconfig
-        - name: pki-kubeconfig-client
+        - name: pki-kube-state-metrics-client
           secret:
             defaultMode: 420
             secretName: pki-kube-state-metrics-client
-        - name: pki-kubeconfig-server
+        - name: pki-kube-state-metrics-server
           secret:
             defaultMode: 420
-            secretName: pki-kube-state-metrics
+            secretName: pki-kube-state-metrics-server
       containers:
       - image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.4.2
         args:
@@ -37,9 +37,9 @@ spec:
             name: kubeconfig
             readOnly: true
           - mountPath: /pki/kubeconfig
-            name: pki-kubeconfig-client
+            name: pki-kube-state-metrics-client
           - mountPath: /pki/server
-            name: pki-kubeconfig-server
+            name: pki-kube-state-metrics-server
         livenessProbe:
           httpGet:
             path: /healthz

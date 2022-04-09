@@ -13,7 +13,7 @@ clusters:
 contexts:
 - context:
     cluster: default-cluster
-    namespace: default
+    namespace: terra-system
     user: default-auth
   name: yc-test
 current-context: yc-test

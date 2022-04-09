@@ -1,0 +1,15 @@
+
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAgent
+metadata:
+  name: vmagent
+  namespace: terra-system
+spec:
+  selectAllByDefault: true
+  replicaCount: 1
+  secrets:
+      - pki-vmagent-client
+  remoteWrite:
+    - url: "http://insert.cluster-2.ingress.dobry-kot.ru/insert/0/prometheus/api/v1/write"

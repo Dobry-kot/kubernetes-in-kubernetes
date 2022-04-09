@@ -1,0 +1,288 @@
+---
+# Source: node-exporter/templates/psp.yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: node-exporter
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+    - 'hostPath'
+  hostNetwork: true
+  hostIPC: false
+  hostPID: true
+  hostPorts:
+    - min: 0
+      max: 65535
+  runAsUser:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  readOnlyRootFilesystem: false
+---
+# Source: node-exporter/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-exporter
+  namespace: terra-system
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: node-exporter/templates/psp-clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: node-exporter-psp
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups: ['extensions']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames:
+      - node-exporter
+---
+# Source: node-exporter/templates/psp-clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-exporter-psp
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: node-exporter-psp
+subjects:
+  - kind: ServiceAccount
+    name: node-exporter
+    namespace: terra-system
+---
+# Source: node-exporter/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: terra-system
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics
+      nodePort: null
+  selector:
+    app.kubernetes.io/name: node-exporter
+---
+# Source: node-exporter/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: terra-system
+  labels:
+    app.kubernetes.io/name: node-exporter
+    helm.sh/chart: node-exporter-2.4.7
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: node-exporter
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  minReadySeconds: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: node-exporter
+        helm.sh/chart: node-exporter-2.4.7
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      
+      serviceAccountName: node-exporter
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: node-exporter
+                namespaces:
+                  - "kube-system"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        runAsUser: 1001
+        fsGroup: 1001
+        runAsNonRoot: 
+      containers:
+        - name: node-exporter
+          image: quay.io/prometheus/node-exporter:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --web.listen-address=0.0.0.0:9100
+            - --web.config=/node-exporter/configs/config.yaml
+          ports:
+            - name: metrics
+              containerPort: 9100
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            httpGet:
+              path: /
+              port: metrics
+              scheme: HTTPS
+          readinessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            httpGet:
+              path: /
+              port: metrics
+              scheme: HTTPS
+          resources:
+            limits: {}
+            requests: {}
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - mountPath: /pki/node-exporter-server
+              name: pki-server
+            - mountPath: /node-exporter/configs
+              name: config
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: config
+          configMap:
+            name: node-exporter-config
+        - name: pki-server
+          secret:
+            secretName: pki-node-exporter-server
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-exporter-config
+  namespace: terra-system
+data:
+  config.yaml: |
+    tls_server_config:
+      # Certificate and key files for server to use to authenticate to client.
+      cert_file: /pki/node-exporter-server/tls.crt
+      key_file: /pki/node-exporter-server/tls.key
+
+      # Server policy for client authentication. Maps to ClientAuth Policies.
+      # For more detail on clientAuth options: [ClientAuthType](https://golang.org/pkg/crypto/tls/#ClientAuthType)
+      client_auth_type: NoClientCert 
+
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-node-exporter-server"
+  namespace: terra-system
+spec:
+  commonName: "system:custom:node-exporter"
+  secretName: "pki-node-exporter-server"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "system:custom"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  - "server auth"
+  dnsNames:
+    - node-exporter-svc
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: service-scrape-node-exporter
+  namespace: terra-system
+spec:
+  endpoints:
+  - path: /metrics
+    port: metrics
+    scheme: https
+    interval: 1s
+    tlsConfig:
+      caFile: /etc/vm/secrets/pki-vmagent-client/ca.crt
+      certFile: /etc/vm/secrets/pki-vmagent-client/tls.crt
+      keyFile: /etc/vm/secrets/pki-vmagent-client/tls.key
+      serverName: my-release-node-exporter
+      # insecureSkipVerify: true
+  jobLabel: node-exporter
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: node-exporter

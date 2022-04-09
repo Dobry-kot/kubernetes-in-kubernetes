@@ -1,0 +1,42 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-vmagent-client"
+spec:
+  commonName: "system:custom:vm-agent-client"
+  secretName: "pki-vm-agent-client"
+  duration: 8760h
+  renewBefore: 4380h
+  subject:
+    organizations:
+    - "system:masters"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-vm-operator-slave-client"
+spec:
+  commonName: "system:custom:vm-operator-client"
+  secretName: "pki-vm-operator-slave-client"
+  duration: 8760h
+  renewBefore: 4380h
+  subject:
+    organizations:
+    - "kubernetes"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+

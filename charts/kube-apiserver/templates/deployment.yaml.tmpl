@@ -234,9 +234,6 @@ spec:
         - secret:
             secretName: "pki-{{ $baseName }}-etcd-client"
           name: pki-{{ $baseName }}-etcd-client
-        - secret:
-            secretName: "pki-{{ $baseName }}-kubelet-client"
-          name: pki-{{ $baseName }}-kubelet-client
       {{- with .volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

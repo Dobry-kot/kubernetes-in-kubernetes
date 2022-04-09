@@ -1,13 +1,12 @@
-cat <<EOF | kubectl apply -f -
+---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMAgent
 metadata:
-  name: example-vmagent
+  name: vmagent-main
 spec:
   selectAllByDefault: true
   replicaCount: 1
   secrets:
-      - pki-vmagent-client
+      - pki-vm-agent-client
   remoteWrite:
     - url: "http://vminsert-example-vmcluster:8480/insert/0/prometheus/api/v1/write"
-EOF

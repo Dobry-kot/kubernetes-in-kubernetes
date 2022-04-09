@@ -5,7 +5,6 @@ export RUNC="1.0.0-rc93"
 wget -q --show-progress --https-only --timestamping \
   https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.23.0/crictl-v1.23.0-linux-amd64.tar.gz \
   https://github.com/opencontainers/runc/releases/download/v${RUNC}/runc.amd64 \
-  https://github.com/containernetworking/plugins/releases/download/v${CNI_PLUGIN}/cni-plugins-linux-amd64-v${CNI_PLUGIN}.tgz \
   https://github.com/containerd/containerd/releases/download/v${CONTAINERD}/containerd-${CONTAINERD}-linux-amd64.tar.gz \
   https://storage.googleapis.com/kubernetes-release/release/v${CLUSTER_VERSION}/bin/linux/amd64/kube-proxy \
   https://storage.googleapis.com/kubernetes-release/release/v${CLUSTER_VERSION}/bin/linux/amd64/kubectl \
@@ -21,7 +20,6 @@ sudo mkdir -p \
 
 tar -xvf crictl-v*-linux-amd64.tar.gz
 tar -xvf containerd-*-linux-amd64.tar.gz -C containerd
-sudo tar -xvf cni-plugins-linux-amd64-v*.tgz -C /opt/cni/bin/
 sudo mv runc.amd64 runc
 chmod +x crictl kubectl kube-proxy kubelet runc 
 sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
@@ -112,7 +110,6 @@ ExecStart=/usr/local/bin/kubelet \\
   --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
   --image-pull-progress-deadline=2m \\
   --kubeconfig=/var/lib/kubelet/kubeconfig \\
-  --network-plugin=cni \\
   --register-node=true \\
   --v=2
 Restart=on-failure
@@ -146,17 +143,17 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-export instance="cl1pnlt1sdb3s9rsaacl-ohyw"
+export instance="fhmb9ncss8s114jq0n7k"
 
-cat <<EOF | sudo tee /tmp/cl1pnlt1sdb3s9rsaacl-ohyw
+cat <<EOF | sudo tee /tmp/fhmb9ncss8s114jq0n7k
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-system-node-cl1pnlt1sdb3s9rsaacl-ohyw"
+  name: "pki-system-node-fhmb9ncss8s114jq0n7k"
 spec:
-  commonName: "system:node:cl1pnlt1sdb3s9rsaacl-ohyw"
-  secretName: "pki-system-node-cl1pnlt1sdb3s9rsaacl-ohyw"
+  commonName: "system:node:fhmb9ncss8s114jq0n7k"
+  secretName: "pki-system-node-fhmb9ncss8s114jq0n7k"
   duration: 8760h # 365d
   renewBefore: 4380h # 178d
   subject:
@@ -168,9 +165,9 @@ spec:
     - "client auth"
     - "server auth"
   dnsNames:
-    - cl1pnlt1sdb3s9rsaacl-ohyw
+    - fhmb9ncss8s114jq0n7k
   ipAddresses:
-    - 10.128.0.9
+    - 10.128.0.23
   issuerRef:
     name: "issuer"
     kind: Issuer

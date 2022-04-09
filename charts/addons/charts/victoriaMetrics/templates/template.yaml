@@ -1,0 +1,133 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: vm-operator-slave
+  labels:
+    app.kubernetes.io/name: vm-operator-slave
+    app.kubernetes.io/instance: victoria-metrics
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: false
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vm-operator-slave
+  labels:
+    app.kubernetes.io/name: vm-operator-slave
+    app.kubernetes.io/instance: victoria-metrics
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: vm-operator-slave
+    app.kubernetes.io/instance: victoria-metrics
+  name: vm-operator-slave
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: webhook
+      port: 443
+      targetPort: 9443
+  selector:
+    app.kubernetes.io/name: vm-operator-slave
+    app.kubernetes.io/instance: victoria-metrics
+  type: "ClusterIP"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vm-operator-slave
+  labels:
+    app.kubernetes.io/name: vm-operator-slave
+    app.kubernetes.io/instance: victoria-metrics
+  annotations:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vm-operator-slave
+      app.kubernetes.io/instance: victoria-metrics
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vm-operator-slave
+        app.kubernetes.io/instance: victoria-metrics
+    spec:
+      serviceAccountName: vm-operator-slave
+      containers:
+        - name: vm-operator-slave
+          image: "victoriametrics/operator:v0.23.3"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: vm-operator-slave
+            - name: VM_PSPAUTOCREATEENABLED
+              value: "true"
+            - name: VM_ENABLEDPROMETHEUSCONVERTEROWNERREFERENCES
+              value: "false"
+          args:
+            - --zap-log-level=info
+            - --enable-leader-election=false
+            - --kubeconfig=/etc/kubernetes/admin.conf
+          command:
+            - manager
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9443
+              name: webhook
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/kubernetes/
+              name: kubeconfig
+              readOnly: true
+            - mountPath: /pki/kubeconfig
+              name: pki-vm-operator-slave-client
+          resources:
+            {}
+      volumes:
+        - secret:
+            secretName: "pki-vm-operator-slave-client"
+          name: pki-vm-operator-slave-client
+        - configMap:
+            defaultMode: 420
+            name: kubeconfig
+          name: kubeconfig

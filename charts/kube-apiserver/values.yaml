@@ -170,6 +170,7 @@ applications:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
+          - "30.64.0.1"
       etcdClient:
         metadata:
           labels: {}

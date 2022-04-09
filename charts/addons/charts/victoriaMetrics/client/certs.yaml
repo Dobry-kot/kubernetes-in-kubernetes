@@ -1,0 +1,87 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: "selfsigning-issuer"
+  namespace: terra-system
+spec:
+  selfSigned: {}
+
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: "issuer"
+  namespace: terra-system
+spec:
+  ca:
+    secretName: "pki-ca"
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-ca"
+  namespace: terra-system
+spec:
+  commonName: "ca"
+  secretName: "pki-ca"
+  duration: 87600h # 3650d
+  renewBefore: 8760h # 365d
+  subject:
+    organizations:
+      - kubernetes
+  usages:
+    - "signing"
+    - "key encipherment"
+    - "server auth"
+    - "client auth"
+  isCA: true
+  issuerRef:
+    name: "selfsigning-issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-sa"
+  namespace: terra-system
+spec:
+  commonName: "sa"
+  secretName: "pki-sa"
+  duration: 87600h # 3650d
+  renewBefore: 8760h # 365d
+  subject:
+    organizations:
+    - kubernetes
+  usages:
+    - "signing"
+    - "key encipherment"
+    - "cert sign"
+  isCA: true
+  issuerRef:
+    name: "selfsigning-issuer"
+    kind: Issuer
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-vmagent-client"
+  namespace: terra-system
+spec:
+  commonName: "system:custom:vmagent-client"
+  secretName: "pki-vmagent-client"
+  duration: 8760h # 365d
+  renewBefore: 4380h # 178d
+  subject:
+    organizations:
+    - "system:masters"
+  usages:
+  - "signing"
+  - "key encipherment"
+  - "client auth"
+  issuerRef:
+    name: "issuer"
+    kind: Issuer

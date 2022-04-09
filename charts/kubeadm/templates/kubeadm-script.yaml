@@ -1,4 +1,10 @@
 
+{{- $currentNamespace   := .Release.Namespace -}}
+{{- $serviceApiServerLb := (lookup "v1" "Service" $currentNamespace "kube-apiserver-svc") }}
+{{- $serviceApiServerIP := $serviceApiServerLb.status.loadBalancer.ingress }}
+
+{{- $secretData := (lookup "v1" "Secret" $currentNamespace "pki-ca") }}
+{{- $caContent := $secretData.data }}
 
 apiVersion: v1
 kind: ConfigMap
@@ -54,8 +60,8 @@ data:
         apiVersion: v1
         clusters:
         - cluster:
-            certificate-authority-data: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURMakNDQWhhZ0F3SUJBZ0lSQUlCd3hYL1AyVzQweFlSWG5JOENzM013RFFZSktvWklodmNOQVFFTEJRQXcKSVRFU01CQUdBMVVFQ2hNSlkyeDFjM1JsY2kweU1Rc3dDUVlEVlFRREV3SmpZVEFlRncweU1qQTBNREl4TmpRNApOREphRncwek1qQXpNekF4TmpRNE5ESmFNQ0V4RWpBUUJnTlZCQW9UQ1dOc2RYTjBaWEl0TWpFTE1Ba0dBMVVFCkF4TUNZMkV3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRQ2IwQzV3aXlYbFZ1SmUKdi9ZSGxkeVh1SFRGM0FJRTlDZVlZUjRoL2VBdzBQUDBONENDaC93NmF2M3lQd2FmYmxZWVN1MGJ6RmVFbEIrcAo0U1RVZGdDZGNiUmNjUUd4TWgyaGZFMjZ6VFpacENENWx5UEtHS3lYcjc2M2NBYSs0bmpiOGs4WHVHVkw2M1FSCk14a0Nwa1JlM292R2xEdFNWUG8zSEc3TFpFOERxeXB5MmVyYldma0FHOHc5bUF0bTlZWUdYL05qSm9xT0loT0UKeGdMZUJoL2RDSnJMRmVKdEFKL2tDZGhYN1RUWmR6YzFpS2VVSzF5Vk9vT2JHa3J0eWgzK0J4d0FPMmMvNUQxRQoxeURmbFhSdG9YeXlVQ3M4WkpSaU8zN0Jndy9mMC84cjFBVVptVVU3cDBML3U1S2R4aENDOVpuL250V2FKcVlNCkRVbXltdlM3QWdNQkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUYKQlFjREFRWUlLd1lCQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVUyckhyeFFUeQpkK2Z3NFNpMnNPNU5SZ014b2Nzd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFGSUEvY3ZES3lxZDFqUEpCY3lTCjBwemNpMHdtN0NTUjJIT2FGa3hKZU9UMDB3c1I0NGsySTVGOFRtT0RoSkdvd2VQSHlNMzJ1UkpkRnQ4SU42enUKNFZvdk8zeWdRVm92MWlRblVrMXV6MzdBSjB4ZzVWa3R5UTdmMFJhcWhKM216VzhQY3hITEdNYkFQZHl0ZFZoWQpnczFRbzhFeDdIWEZQQldzblM3WnM0ZEJGMVlORFF4ZjJKdzZ5RE94SFpYUXhBNUdJTHNvQ0t5SXdibURVdFZWCmJLdVBKbmtEUm8wTXVGZWtmYW1QTnNEREg3MGlvNnc4UEg0UC8xb0loTms2MDlNZFpXUDdRSExjQkdqNUNzUmwKSlJBRWpKcFN4WmdvVXBNcDExcHpRTlc2WWloam8wVklYaEFBakp1L3E5NUdDZkRIZnRGNVpVS3lTY01zUU8vQQpETTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
-            server: https://51.250.45.75:6443
+            certificate-authority-data: "{{ get $caContent "ca.crt" }}"
+            server: https://{{ (first $serviceApiServerIP ).ip }}:6443
           name: ""
         contexts: null
         current-context: ""
