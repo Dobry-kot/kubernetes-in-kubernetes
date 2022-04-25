@@ -125,6 +125,7 @@ applications:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
+          - "127.0.0.6"
       peer:
         metadata:
           labels: {}
@@ -144,6 +145,7 @@ applications:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
+          - "127.0.0.6"
       ca:
         metadata:
           labels: {}
@@ -162,5 +164,6 @@ applications:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
+          - "127.0.0.6"
         isCA: "true"
         issuerRefName: selfsigning-issuer

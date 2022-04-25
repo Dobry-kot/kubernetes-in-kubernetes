@@ -29,7 +29,6 @@ helm upgrade terra-kube . --install  \
 
 helm upgrade cilium cilium/cilium --version 1.11.3 \
     --install \
-    --namespace kube-system \
     --set kubeProxyReplacement=strict \
     --set k8sServiceHost=51.250.13.121 \
     --set k8sServicePort=6443

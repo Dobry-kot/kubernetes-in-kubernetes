@@ -92,6 +92,7 @@ spec:
             - --tls-cert-file=/pki/pki-{{ $baseName }}-server/tls.crt
             - --tls-private-key-file=/pki/pki-{{ $baseName }}-server/tls.key
             - --client-ca-file=/pki/pki-{{ $baseName }}-server/ca.crt
+            - --v=2
             - --etcd-cafile=/pki/pki-{{ $baseName }}-etcd-client/ca.crt
             - --etcd-certfile=/pki/pki-{{ $baseName }}-etcd-client/tls.crt
             - --etcd-keyfile=/pki/pki-{{ $baseName }}-etcd-client/tls.key
@@ -149,6 +150,8 @@ spec:
               name: pki-konnectivity-client
             - mountPath: /etc/kubernetes/konnectivity-server
               name: konnectivity-uds
+            - mountPath: /basic-auth
+              name: basic-auth
           {{- with .volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -217,6 +220,9 @@ spec:
 
       {{- end }}
       volumes:
+        - name: basic-auth
+          configMap:
+            name: "basic-auth"
         - emptyDir: {}
           name: konnectivity-uds
         - secret:

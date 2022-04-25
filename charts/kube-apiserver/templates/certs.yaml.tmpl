@@ -18,7 +18,7 @@
 {{- end }}
 {{- with $.Values.applications.proxyServer }}
   {{- if .enable }}
-    {{- $serviceKubeApiProxyServer    := (lookup "v1" "Service" $currentNamespace "kube-apiserver-proxy-svc") }}
+    {{- $serviceKubeApiProxyServer    := (lookup "v1" "Service" $currentNamespace "istio-ingress") }}
     {{- $serviceKubeApiProxyServerIP  = $serviceKubeApiProxyServer.status.loadBalancer.ingress }}
   {{- end }}
 {{- end }}

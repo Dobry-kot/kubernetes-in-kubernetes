@@ -95,7 +95,7 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-exporter
+  name: node-exporter-svc
   namespace: terra-system
   annotations:
     prometheus.io/scrape: "true"
@@ -277,10 +277,10 @@ spec:
     scheme: https
     interval: 1s
     tlsConfig:
-      caFile: /etc/vm/secrets/pki-vmagent-client/ca.crt
-      certFile: /etc/vm/secrets/pki-vmagent-client/tls.crt
-      keyFile: /etc/vm/secrets/pki-vmagent-client/tls.key
-      serverName: my-release-node-exporter
+      caFile: /etc/vm/secrets/pki-vm-agent-client/ca.crt
+      certFile: /etc/vm/secrets/pki-vm-agent-client/tls.crt
+      keyFile: /etc/vm/secrets/pki-vm-agent-client/tls.key
+      serverName: node-exporter-svc
       # insecureSkipVerify: true
   jobLabel: node-exporter
   selector:

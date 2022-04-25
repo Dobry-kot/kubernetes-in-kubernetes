@@ -44,3 +44,12 @@ data:
     - name: etcd
       connection:
         proxyProtocol: Direct
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: basic-auth
+data:
+  basic_auth.csv: |
+    @dm1nP@ss,admin,admin

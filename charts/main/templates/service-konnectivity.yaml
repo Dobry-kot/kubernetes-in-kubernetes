@@ -8,10 +8,8 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 8132
-    name: agentport
   - port: 6443
-    name: client
+    name: https-server
   selector:
     app.kubernetes.io/name: kube-apiserver
 

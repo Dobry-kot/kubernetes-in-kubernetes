@@ -537,7 +537,7 @@ metadata:
 subjects:
   - apiGroup: "rbac.authorization.k8s.io"
     kind: User
-    name: system:custom:victoria-metrics-operator-client
+    name: system:custom:vm-operator-client
 roleRef:
   kind: ClusterRole
   name: victoria-metrics-victoria-metrics-operator
@@ -557,7 +557,7 @@ metadata:
 subjects:
   - apiGroup: "rbac.authorization.k8s.io"
     kind: User
-    name: system:custom:victoria-metrics-operator-client
+    name: system:custom:vm-operator-client
 roleRef:
   kind: ClusterRole
   name: victoria-metrics-victoria-metrics-operator-psp
@@ -626,7 +626,7 @@ metadata:
 subjects:
   - apiGroup: "rbac.authorization.k8s.io"
     kind: User
-    name: system:custom:victoria-metrics-operator-client
+    name: system:custom:vm-operator-client
 roleRef:
   kind: Role
   name: victoria-metrics-victoria-metrics-operator

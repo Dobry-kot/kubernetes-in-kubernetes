@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "pki-vmagent-client"
+  name: "pki-vm-agent-client"
 spec:
   commonName: "system:custom:vm-agent-client"
   secretName: "pki-vm-agent-client"

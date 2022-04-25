@@ -1,0 +1,71 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: local-gateway
+spec:
+  selector:
+    app: istio-ingress
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: https
+    tls:
+      mode: SIMPLE
+      credentialName: pki-kube-apiserver-server
+    hosts:
+      - "*"
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: httpbin
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - local-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            port:
+              number: 6443
+            host: kube-apiserver-svc
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: originate-tls-for-edition-cnn-com
+spec:
+  host: "*"
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "pki-ingress-server"
+spec:
+  commonName: "system:custom:ingress-gateway"
+  secretName: "pki-ingress-server"
+  duration: 8760h
+  renewBefore: 4380h
+  subject:
+    organizations:
+    - "kubernetes"
+  usages:
+    - "signing"
+    - "key encipherment"
+    - "server auth"
+
+  issuerRef:
+    name: "issuer"
+    kind: Issuer
+

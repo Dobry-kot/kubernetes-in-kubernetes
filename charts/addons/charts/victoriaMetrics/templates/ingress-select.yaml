@@ -1,3 +1,5 @@
+{{- $currentNamespace             := .Release.Namespace -}}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -5,12 +7,12 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: select.cluster-2.ingress.dobry-kot.ru
+  - host: select.{{ $currentNamespace }}.ingress.dobry-kot.ru
     http:
       paths:
       - backend:
           service:
-            name: vmselect-example-vmcluster-additional-service
+            name: vmselect-vmcluster-additional-service
             port:
               number: 8481
         path: /
@@ -23,14 +25,47 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: insert.cluster-2.ingress.dobry-kot.ru
+  - host: insert.{{ $currentNamespace }}.ingress.dobry-kot.ru
     http:
       paths:
       - backend:
           service:
-            name: vminsert-example-vmcluster
+            name: vminsert-vmcluster
             port:
               number: 8480
         path: /
         pathType: Prefix
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.{{ $currentNamespace }}.ingress.dobry-kot.ru
+      secretName: pki-kube-apiserver-server
+  rules:
+  - host: api.{{ $currentNamespace }}.ingress.dobry-kot.ru
+    http:
+      paths:
+      - backend:
+          service:
+            name: kube-apiserver-svc
+            port:
+              number: 6443
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: metric-server-svc
+            port:
+              number: 443
+        path: /apis/metrics.k8s.io/
+        pathType: Prefix
+
 

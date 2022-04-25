@@ -14,7 +14,7 @@ sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://pack
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update
 sudo apt install ca-certificates -y
-sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-get install -y kubeadm kubelet  kubectl
 # https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 # apt install containerd
 # sudo mkdir -p /etc/containerd

@@ -1,5 +1,5 @@
 
-
+{{- $currentNamespace             := .Release.Namespace -}}
 ---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMAgent
@@ -10,6 +10,6 @@ spec:
   selectAllByDefault: true
   replicaCount: 1
   secrets:
-      - pki-vmagent-client
+      - pki-vm-agent-client
   remoteWrite:
-    - url: "http://insert.cluster-2.ingress.dobry-kot.ru/insert/0/prometheus/api/v1/write"
+    - url: "http://insert.{{ $currentNamespace }}.ingress.dobry-kot.ru/insert/0/prometheus/api/v1/write"

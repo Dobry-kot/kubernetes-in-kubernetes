@@ -17,4 +17,4 @@ kubeconfig
 #charts/addons/charts/konnectivity-client
 #charts/addons/charts/kube-state-metrics
 #charts/addons/charts/metric-server
-#charts/addons/charts/certmanager/client/certs.yaml
+charts/istio/templates/istio-1.13.2

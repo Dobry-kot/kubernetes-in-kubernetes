@@ -30,7 +30,8 @@ charts/addons/charts/konnectivity-client
 #charts/konnectivity
 #charts/addons/charts/prometheus-adapter
 charts/addons/charts/cilium
-#charts/addons/charts/victoriaMetrics
+charts/addons/charts/victoriaMetrics
 charts/addons/charts/monitoring-client
-
+charts/istio
 charts/addons/charts/dns
+#charts/addons/

@@ -5,7 +5,7 @@ applications:
     external: true
     mode: "http-connect"
   proxyServer:
-    enable: true
+    enable: false
     
   kubeApiserver:
 
@@ -166,11 +166,14 @@ applications:
           - "signing"
           - "key encipherment"
           - "server auth"
+          - "client auth"
         dnsNames:
           - "localhost"
         ipAddresses:
           - "127.0.0.1"
+          - "127.0.0.6"
           - "30.64.0.1"
+          - "51.250.78.48"
       etcdClient:
         metadata:
           labels: {}

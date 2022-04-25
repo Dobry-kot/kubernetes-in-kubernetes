@@ -1,3 +1,4 @@
+{{- $currentNamespace             := .Release.Namespace -}}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -10,7 +11,7 @@ spec:
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+    - "{{ $currentNamespace }}"
   usages:
   - "signing"
   - "key encipherment"
@@ -31,7 +32,7 @@ spec:
   renewBefore: 4380h # 178d
   subject:
     organizations:
-    - "cluster-2"
+    - "{{ $currentNamespace }}"
 
   usages:
   - "signing"
@@ -44,6 +45,6 @@ spec:
 
   dnsNames:
     - cert-manager-webhook
-    - cert-manager-webhook.cluster-2
-    - cert-manager-webhook.cluster-2.svc
+    - cert-manager-webhook.{{ $currentNamespace }}
+    - cert-manager-webhook.{{ $currentNamespace }}.svc
     - localhost
