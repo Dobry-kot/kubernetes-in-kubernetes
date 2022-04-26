@@ -1,3 +1,4 @@
+{{- if .Values.applications.apiProxy.enable }}
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -42,7 +43,4 @@ data:
         proxy_ssl_certificate_key /pki/client/tls.key;
       }
     }
-
-
-
-
+{{- end }}

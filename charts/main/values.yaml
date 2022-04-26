@@ -2,3 +2,5 @@ applications:
   konnectivityServer:
     enable: true
     external: true
+  apiProxy:
+    enable: false

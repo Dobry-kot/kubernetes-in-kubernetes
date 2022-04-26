@@ -1,3 +1,5 @@
+{{- if .Values.applications.apiProxy.enable }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,3 +42,4 @@ spec:
         - secret:
             secretName: "pki-kube-apiserver-server"
           name: "pki-kube-apiserver-server"
+{{- end }}
